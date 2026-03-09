@@ -109,6 +109,10 @@ export function _runShellExample(cmd: string, opts: ShellExampleOpts): void {
     }
     const stdout = result.stdout
     if (opts.stdout !== undefined) {
+      // If display is true, stdout must not be empty
+      if (opts.stdout.display && (!stdout || stdout.trim() === '')) {
+        throw new Error(`stdout.display: true but command produced no output (exit code: ${actualExitCode})`)
+      }
       if (opts.stdout.contains !== undefined) {
         const actualDesc = stdout === '' ? '(empty)' : stdout
         assert.ok(

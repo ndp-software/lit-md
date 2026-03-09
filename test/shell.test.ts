@@ -63,6 +63,13 @@ describe('shellExample: runtime behaviour', () => {
     )
   })
 
+  test('throws when display: true but stdout is empty', () => {
+    assert.throws(
+      () => _runShellExample('true', { stdout: { display: true } }),
+      /stdout.display: true but command produced no output/
+    )
+  })
+
 })
 
 describe('shellExample: exitCode assertion', () => {

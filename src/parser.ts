@@ -937,6 +937,10 @@ function appendShellExampleAnnotations(
       if (displayProp && displayProp.initializer.kind === ts.SyntaxKind.TrueKeyword) {
         if (execution && execution.exitCode === 0) {
           lines.push(execution.stdout)
+        } else if (execution && execution.exitCode !== 0) {
+          lines.push(`# [ERROR] stdout unavailable (exit code: ${execution.exitCode})`)
+        } else {
+          lines.push(`# [ERROR] stdout unavailable (execution failed)`)
         }
       } else if (containsProp && ts.isStringLiteralLike(containsProp.initializer)) {
         // Show contains assertion only if display is not true
