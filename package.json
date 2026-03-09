@@ -7,7 +7,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/ndp-software/lit-md"
   },
   "keywords": [
     "literate programming",
@@ -30,10 +30,6 @@
     "docs/**/*",
     "src/**/*"
   ],
-  "exports": {
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts"
-  },
   "scripts": {
     "prepublishOnly": "npm run verify && npm run build",
     "readme": "node ./src/cli.ts --test --typecheck --out ./README.md src/docs/README.lit-md.ts",
