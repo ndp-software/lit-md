@@ -655,9 +655,9 @@ describe('parse: shellExample() → sh code block', () => {
   })
 
   test('shellExample with long single-line outputFiles contains → truncated prose + display node', () => {
-    const nodes = parse(`shellExample('sort input.txt', { outputFiles: [{ path: 'output.txt', contains: 'This is a rather long expected string that exceeds sixty chars' }] })`)
+    const nodes = parse(`shellExample('sort input.txt', { exitCode: 2, outputFiles: [{ path: 'output.txt', contains: 'This is a rather long expected string that exceeds sixty chars' }] })`)
     assert.equal(nodes.length, 3)
-    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt'})
+    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.deepEqual(nodes[1], { kind: 'prose', text: 'Output file `output.txt` contains This is a rather long expected string that exceeds sixty cha....', terminal: true })
     assert.equal(nodes[2]?.kind, 'output-file-display')
     const displayNode = nodes[2] as any
@@ -666,9 +666,9 @@ describe('parse: shellExample() → sh code block', () => {
   })
 
   test('shellExample with multi-line outputFiles contains → prose + excerpt code block, no display node', () => {
-    const nodes = parse(`shellExample('sort input.txt', { outputFiles: [{ path: 'output.txt', contains: '# Title\\n\\nBody.' }] })`)
+    const nodes = parse(`shellExample('sort input.txt', { exitCode: 2, outputFiles: [{ path: 'output.txt', contains: '# Title\\n\\nBody.' }] })`)
     assert.deepEqual(nodes, [
-      { kind: 'code', lang: 'sh', text: '$ sort input.txt'},
+      { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'},
       { kind: 'prose', text: 'Output file `output.txt` contains # Title...:', terminal: true, noBlankAfter: true },
       { kind: 'code', lang: 'text', text: '...\n# Title\n\nBody.\n...'}
     ])
@@ -816,9 +816,9 @@ describe('parse: shellExample() → sh code block', () => {
   })
 
   test('shellExample with outputFiles displayPath: false, long contains → hides file name, shows truncated content', () => {
-    const nodes = parse(`shellExample('sort input.txt', { outputFiles: [{ path: 'output.txt', contains: 'This is a very long string that definitely exceeds the sixty character limit', displayPath: false }] })`)
+    const nodes = parse(`shellExample('sort input.txt', { exitCode: 2, outputFiles: [{ path: 'output.txt', contains: 'This is a very long string that definitely exceeds the sixty character limit', displayPath: false }] })`)
     assert.equal(nodes.length, 3)
-    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt'})
+    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.deepEqual(nodes[1], { kind: 'prose', text: 'Contains This is a very long string that definitely exceeds the sixty....', terminal: true })
     assert.equal(nodes[2]?.kind, 'output-file-display')
     const displayNode = nodes[2] as any
@@ -868,18 +868,18 @@ describe('parse: shellExample() → sh code block', () => {
   })
 
   test('shellExample with outputFiles summary: false (no contains/matches) → hides summary, shows display', () => {
-    const nodes = parse(`shellExample('sort input.txt', { outputFiles: [{ path: 'output.txt', summary: false }] })`)
+    const nodes = parse(`shellExample('sort input.txt', { exitCode: 2, outputFiles: [{ path: 'output.txt', summary: false }] })`)
     assert.equal(nodes.length, 2)
-    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt'})
+    assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.equal(nodes[1]?.kind, 'output-file-display')
     const displayNode = nodes[1] as any
     assert.ok(displayNode.execution, 'should have execution when no contains/matches')
   })
 
   test('shellExample with outputFiles summary: false (multi-line contains) → hides summary, shows code excerpt', () => {
-    const nodes = parse(`shellExample('sort input.txt', { outputFiles: [{ path: 'output.txt', contains: 'Line 1\\nLine 2', summary: false }] })`)
+    const nodes = parse(`shellExample('sort input.txt', { exitCode: 2, outputFiles: [{ path: 'output.txt', contains: 'Line 1\\nLine 2', summary: false }] })`)
     assert.deepEqual(nodes, [
-      { kind: 'code', lang: 'sh', text: '$ sort input.txt'},
+      { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'},
       { kind: 'code', lang: 'text', text: '...\nLine 1\nLine 2\n...'}
     ])
   })

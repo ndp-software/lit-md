@@ -231,6 +231,13 @@ export function parse(src: string, lang = 'typescript'): DocNode[] {
             if (opts && isExecutionNeeded(opts)) {
               const outputPaths = extractOutputFilePaths(opts)
               execution = executeShellCommand(cmd, inputFiles, outputPaths, expectedExitCode)
+              
+              // Fail if exit code doesn't match expectations
+              if (execution && execution.exitCode !== expectedExitCode) {
+                throw new Error(
+                  `shellExample failed: ${cmd}\nexit ${execution.exitCode} (expected exit code ${expectedExitCode})`
+                )
+              }
             }
 
             const displayCommand = opts ? readBoolOption(getProp(opts, 'displayCommand')) : true
@@ -933,13 +940,15 @@ function appendShellExampleAnnotations(
       const containsProp = getProp(prop.initializer as ts.ObjectLiteralExpression, 'contains')
       const displayProp = getProp(prop.initializer as ts.ObjectLiteralExpression, 'display')
       
-      // If display is true, use cached execution or show the contains assertion
+      // If display is true, use cached execution to show stdout
       if (displayProp && displayProp.initializer.kind === ts.SyntaxKind.TrueKeyword) {
         if (execution && execution.exitCode === 0) {
           lines.push(execution.stdout)
         } else if (execution && execution.exitCode !== 0) {
+          // This shouldn't happen now since we throw on exit code mismatch
           lines.push(`# [ERROR] stdout unavailable (exit code: ${execution.exitCode})`)
         } else {
+          // This shouldn't happen now since we throw on errors
           lines.push(`# [ERROR] stdout unavailable (execution failed)`)
         }
       } else if (containsProp && ts.isStringLiteralLike(containsProp.initializer)) {
