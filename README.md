@@ -74,9 +74,25 @@ example('multiply example', () => {
 
 ```
 
-```sh
-$ lit-md tmp.ts
+````sh
+$ lit-md my-readme.ts
+## My Project README.
+
+This is a really great project! 
+Adding numbers is as simple as using the "+" operator:
+```ts
+const a = 1
+const b = 2
+console.log(a + b) // => 3
 ```
+
+Also supported is multiplication:
+```ts
+const x = 3
+const y = 4
+console.log(x * y) // => 12
+```
+````
 
 For more information on the CLI, see [CLI documentation](./docs/cli.md).
 

@@ -93,7 +93,10 @@ example('multiply example', () => {
 `
   }],
   displayCommand: true,
-  stdout: { display: true }
+  stdout: {
+    display: true,
+    contains: 'This is a really great project!'
+  }
 })
 
 /*

@@ -41,7 +41,7 @@ function resolveCmdPath(cmdString: string): string {
 }
 
 /** Build shell alias prefix lines to prepend to commands. */
-function buildAliasPrefix(): string {
+export function buildAliasPrefix(): string {
   if (_aliases.size === 0) return ''
   const lines = [..._aliases.entries()].map(([name, cmd]) => `alias ${name}='${cmd}'`)
   return lines.join('\n') + '\n'

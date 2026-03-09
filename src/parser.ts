@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { writeFileSync, mkdtempSync, rmSync, readFileSync } from 'node:fs'
 import { join, isAbsolute } from 'node:path'
 import { tmpdir } from 'node:os'
+import { buildAliasPrefix } from './shell.ts'
 
 export type ProseNode = { kind: 'prose'; text: string; terminal?: true; noBlankAfter?: true; noBlankBefore?: true }
 export type CodeNode = { kind: 'code'; lang: string; text: string; title?: string }
@@ -881,8 +882,10 @@ function executeShellCommand(cmd: string, inputFiles: Array<InputFileInfo>, outp
       writeFileSync(resolvePath(f.path), f.content, 'utf8')
     }
 
-    // Execute command
-    const result = spawnSync(cmd, { shell: true, encoding: 'utf8', cwd: tmpDir })
+    // Execute command with alias prefix
+    const prefix = buildAliasPrefix()
+    const fullCmd = prefix ? `${prefix}${cmd}` : cmd
+    const result = spawnSync(fullCmd, { shell: true, encoding: 'utf8', cwd: tmpDir })
     
     // Capture output files when exit code matches expectation
     const outputFiles = new Map<string, string>()
