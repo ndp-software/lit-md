@@ -1,6 +1,6 @@
 {
   "name": "@ndp-software/lit-md",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Literate test files that generate README.md",
   "license": "UNLICENSED -- All rights reserved. See LICENSE file.",
   "author": "Andy Peterson <andy@ndpsoftware.com>",

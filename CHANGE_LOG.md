@@ -5,6 +5,13 @@
 ## Added
 
 
+## [0.4] - 2026-03-09
+
+## Added
+
+- **Engine** Deal better with shellExample command failures. When a shell command fails (non-zero exit code or timeout), the error message now includes the full command output (stdout and stderr) for easier debugging. If the output is empty, it will say `(empty)` instead of showing an empty diff. This provides clearer feedback on what went wrong with the command.
+
+
 ## [0.3] - 2026-03-08
 
 ## Added
