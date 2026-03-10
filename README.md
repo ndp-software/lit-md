@@ -7,7 +7,7 @@ Literate test files that generate `README.md`s.
 Some projects, especially libraries, require numerous code examples. For those responsible for updating
 a README, or other documentation, this can be burdensome and error-prone. I've run into this before when writing a testing tool, and ran into it again when sketching out a new UI library. I wanted to write documentation with embedded code examples, but I also wanted to be sure that the examples were correct and up-to-date. This is what led me to create **lit-md**.
 
-With lit-md, you write your documentation with embedded code samples.
+With **lit-md**, you write your documentation with embedded code samples.
 All the code samples are automatically type-checked and run through node to
 verify them (as tests). Every example actually works!
 
@@ -20,76 +20,79 @@ Key features:
 - fully tested with its own test suite, which also serves as
   documentation and examples for users
 
-There _are_ other tools with the same aims (see #similar-tools below),
-but this follows in the Literate programming tradition in one particular way, and
-for the Typescript and TDD era. I have aimed to provide a great DX
+There _are_ other tools with the same aims (see [#similar-tools]),
+But this combines my interest in Literate programming with a passion for TDD and excitement about Typescript. I have aimed to provide a great DX
 for writing documentation, with a simple syntax and powerful features
-that work well with the node ecosystem.
+that work well with-in the node ecosystem.
 
 Documention is written in .ts (or .lit-md.ts) files, and the documentation is generated from comments and test bodies:
 ```sh
-lit-md README.lit-md.ts > .README.md
+lit-md README.lit-md.ts > README.md
 
-# As a convenience, "run" your documentation as a test suite:
-node --test README.lit-md.ts
+# As a convenience, "run" all the code examples as tests, or a test suite:
+node --test README.lit-md.ts > README.md
 
-# ... and typecheck:
-tsc --typecheck README.lit-md.ts
-
-# Or, you can do it all in one step with:
-lit-md --test --typecheck README.lit-md.ts  # all-in-one!
+# Or, you can add typechecking and do them all as one step:
+lit-md --typecheck --test README.lit-md.ts > README.md
 ```
 ## How it Works
 A **lit-md** file contains prose in comments and examples in test bodies.
-At a basic level, a file is processed and
+At a basic level, a file is processed, and
 - comments are directly transferred into markdown, and
 - example (or `test`, `it`, `spec`) bodies become fenced code blocks.
 To make this work well, there are quite a few nuances and features to control
 what appears in the output and how it looks.
 
-# Basic Usage
+## Basic Usage
 
-Add `@ndp-software/lit-md` to your project, and then create a file `my-readme.ts` with the following content:
+Add `@ndp-software/lit-md` to your project
+
+Then create a readme. The following is an example for a hypohetical "mathlib" project. Here's the source file:
 
 ```ts
+import { describe, example } from '@ndp-software/lit-md'
+import assert from 'node:assert/strict'
+
+import { add, multiply } from './maths.ts'
 
 describe('My Project README.', () => {
-/*
-This is a really great project! 
-Adding numbers is as simple as using the "+" operator:
-*/
-example('add example', () => {
-  const a = 1
-  const b = 2
-  assert.equal(a + b, 3)
-})  
-
-// Also supported is multiplication:
-example('multiply example', () => {
-  const x = 3
-  const y = 4
-  assert.equal(x * y, 12)
+  /*
+  This is a really great project! 
+  Adding numbers is as simple as using the "+" operator:
+  */
+  example('add example', () => {
+    const a = 1
+    const b = 2
+    assert.equal(add(a, b), 3)
+  })  
+  
+  // Also supported is multiplication:
+  example('multiply example', () => {
+    const x = 3
+    const y = 4
+    assert.equal(multiply(x, y), 12)
+  })
 })
 
 ```
 
 ````sh
-$ lit-md my-readme.ts
+$ lit-md mathlib-readme.ts
 ## My Project README.
 
 This is a really great project! 
-Adding numbers is as simple as using the "+" operator:
+  Adding numbers is as simple as using the "+" operator:
 ```ts
 const a = 1
 const b = 2
-a + b // => 3
+add(a, b) // => 3
 ```
 
 Also supported is multiplication:
 ```ts
 const x = 3
 const y = 4
-x * y // => 12
+multiply(x, y) // => 12
 ```
 ````
 
@@ -114,12 +117,12 @@ hello world
 ```
 
 For more information on the `shellExample`, see [shellCommand documentation](./docs/shell-examples.md).
-## Similar tools:
+## Similar tools
 - [Literate JS](https://github.com/danvk/literate-ts) -- types checks code blocks in markdown files
 - [TwoSlash](https://github.com/microsoft/TypeScript-Website/tree/v2/packages/ts-twoslasher)
 - In [Test Pantry](https://github.com/ndp-software/test-pantry), I wrote [a function that extracts code blocks out of a markdown file and produces a test (.js) file](https://github.com/ndp-software/test-pantry/blob/master/readme-test-filter.js). This is similar to the approach of Literate JS (above), but is JS-only. This approach has limitations that the full parsing of lit-md overcomes.
 
-## CREDITS
+## Credits
 
 Conceived of and built by Andrew J. Peterson, NDP Software
 
