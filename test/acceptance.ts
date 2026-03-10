@@ -68,7 +68,28 @@ describe('acceptance', () => {
 
       // Import the file to allow module-level setup (like setDescribeFormat calls)
       try {
-        await import(inputPath)
+        // Suppress test output during import
+        const origStdoutWrite = process.stdout.write
+        const origStderrWrite = process.stderr.write
+        const origLog = console.log
+        const origInfo = console.info
+        const origWarn = console.warn
+        try {
+          process.stdout.write = () => true as any
+          process.stderr.write = () => true as any
+          console.log = () => {}
+          console.info = () => {}
+          console.warn = () => {}
+          await import(inputPath)
+          // Wait for deferred test execution to complete while output is suppressed
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } finally {
+          process.stdout.write = origStdoutWrite
+          process.stderr.write = origStderrWrite
+          console.log = origLog
+          console.info = origInfo
+          console.warn = origWarn
+        }
       } catch {
         // File might not be importable, continue
       }

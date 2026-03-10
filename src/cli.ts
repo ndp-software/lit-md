@@ -258,6 +258,12 @@ async function generateMarkdown(): Promise<void> {
       const outputFileName = getOutputFileName(inputPath)
       const fileNameWithoutMd = outputFileName.slice(0, -3) // Remove .md
       outPath = join(dirname(resolve(inputPath)), `${fileNameWithoutMd}.snapshot.md`)
+    } else if (matchSnapshot) {
+      // When matching snapshots, suppress stdout output
+      const snapshotDir = outputDir || dirname(resolve(inputPath))
+      const outputFileName = getOutputFileName(inputPath)
+      const fileNameWithoutMd = outputFileName.slice(0, -3) // Remove .md
+      outPath = join(snapshotDir, `${fileNameWithoutMd}.snapshot.md`)
     } else if (outFlag) {
       outPath = outFlag
     } else if (outputDir) {
