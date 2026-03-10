@@ -9,6 +9,21 @@ import { stripTypesFlag, watchFilesAndWait } from './shell.ts'
 import { resolveOutputFiles } from './resolver.ts'
 import { resolveDescribeFormat, resetDescribeFormat } from './describe-format.ts'
 
+// Handle unhandled promise rejections and exceptions
+let hasUnhandledError = false
+
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled rejection:', reason)
+  hasUnhandledError = true
+  process.exitCode = 1
+})
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught exception:', error)
+  hasUnhandledError = true
+  process.exitCode = 1
+})
+
 // --- Argument parsing ---
 
 const args = process.argv.slice(2)
@@ -63,9 +78,15 @@ function parseTestSummary(output: string): { passed: number; failed: number; tot
       const match = line.match(/tests\s+(\d+)/)
       if (match) stats.total = parseInt(match[1])
     }
+    // Check for async activity errors (unhandled rejections after test ends)
+    if (line.includes('Error: A resource generated asynchronous activity after the test ended') ||
+        line.includes('unhandledRejection') ||
+        line.includes('uncaughtException')) {
+      stats.hasFailed = true
+    }
   }
   
-  stats.hasFailed = stats.failed > 0
+  stats.hasFailed = stats.hasFailed || stats.failed > 0
   return stats
 }
 
@@ -274,16 +295,24 @@ async function executeTasks(): Promise<void> {
     const stripFlag = stripTypesFlag()
     const nodeArgs = ['--test', ...(stripFlag ? [stripFlag] : []), ...inputPaths.map(p => resolve(p))]
     
-    // In wait mode, capture output for summary display; otherwise inherit (show full output)
-    const spawnOptions = wait ? { encoding: 'utf-8' as const } : { stdio: 'inherit' as const, env: process.env }
+    // Always capture output to check for async errors, but show it in normal mode
+    const result = spawnSync(process.execPath, nodeArgs, { encoding: 'utf-8' as const })
     
-    const result = spawnSync(process.execPath, nodeArgs, spawnOptions)
+    // Show output in normal (non-wait) mode
+    if (!wait) {
+      if (result.stdout) process.stdout.write(result.stdout)
+      if (result.stderr) process.stderr.write(result.stderr)
+    }
+    
+    // Combine stdout and stderr for analysis
+    const fullOutput = ((result.stdout || '') + '\n' + (result.stderr || ''))
     
     // Handle output based on mode
+    let stats = parseTestSummary(fullOutput)
     if (wait && result.stdout) {
-      // In wait mode: capture output and show condensed summary
+      // In wait mode: show condensed summary instead of full output
       const output = result.stdout.toString()
-      const stats = parseTestSummary(output)
+      stats = parseTestSummary(output)
       
       if (stats.hasFailed) {
         // Extract and show failures section
@@ -299,9 +328,10 @@ async function executeTasks(): Promise<void> {
       }
     }
     
-    if (result.status !== 0) {
+    if (result.status !== 0 || stats.hasFailed) {
+      const exitCode = result.status !== 0 ? result.status : 1
       // In wait mode, report error but continue; in normal mode, exit
-      if (!wait) process.exit(result.status ?? 1)
+      if (!wait) process.exit(exitCode ?? 1)
       // Continue to markdown generation even if tests failed
     }
   }

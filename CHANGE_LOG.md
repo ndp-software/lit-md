@@ -2,8 +2,9 @@
 
 ## [Unreleased]
 
-## Added
+## Fixed
 
+- **CLI**: Asynchronous errors (unhandled rejections and exceptions) that occur after tests complete are now properly detected and cause the process to exit with a failure status (non-zero exit code). This ensures that errors like "A resource generated asynchronous activity after the test ended" are displayed as red failure indicators instead of being silently ignored. The CLI now also installs global error handlers to catch any unhandled errors and report them immediately.
 
 ## [0.4] - 2026-03-09
 
