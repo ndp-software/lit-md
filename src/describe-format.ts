@@ -34,20 +34,10 @@ export function getDescribeFormatOverride(): DescribeFormatType | undefined {
   return overrideFormat
 }
 
-/**
- * Reset the describe format override.
- * Mainly useful for testing.
- * @internal
- */
 export function resetDescribeFormat(): void {
   overrideFormat = undefined
 }
 
-/**
- * Resolve the final describe format to use.
- * Takes the CLI format and applies the override if set.
- * @internal
- */
 export function resolveDescribeFormat(cliFormat: string): string {
   return overrideFormat ?? cliFormat
 }
