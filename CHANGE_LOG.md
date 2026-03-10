@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## Breaking Changes
+
+- **CLI**: Renamed `--wait` flag to `--watch` for consistency with common CLI conventions (webpack, esbuild, TypeScript, etc.). This flag enables watch mode, which automatically regenerates output when input files change. Update scripts and CI/CD configurations that use `lit-md --wait` to use `lit-md --watch` instead.
+
 ## Fixed
 
 - **CLI**: Asynchronous errors (unhandled rejections and exceptions) that occur after tests complete are now properly detected and cause the process to exit with a failure status (non-zero exit code). This ensures that errors like "A resource generated asynchronous activity after the test ended" are displayed as red failure indicators instead of being silently ignored. The CLI now also installs global error handlers to catch any unhandled errors and report them immediately.
@@ -21,7 +25,7 @@
 
 - **CLI**: Visual feedback indicators for all operations. Watch mode and normal mode now display `✅ Typecheck passed` or `❌ Typecheck failed` for type checking results, and `✅ Generated N file(s)` for markdown generation, providing consistent visual feedback alongside test results.
 
-- **CLI**: Additional exit keys for watch mode (`--wait`). Users can now exit watch mode by pressing `q`, `x`, or `esc` in addition to `Ctrl+C`, making it more intuitive and accessible.
+- **CLI**: Additional exit keys for watch mode (`--watch`). Users can now exit watch mode by pressing `q`, `x`, or `esc` in addition to `Ctrl+C`, making it more intuitive and accessible.
 
 - **Engine**: Colored and contextual typecheck error output using TypeScript's `formatDiagnosticsWithColorAndContext()`. Type errors now display with red highlighting, line numbers, and surrounding code context for better visibility and debugging.
 

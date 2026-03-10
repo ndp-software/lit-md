@@ -1,22 +1,22 @@
-# How --wait Mode Works
+# How --watch Mode Works
 
-A detailed walkthrough of the `--wait` mode implementation in lit-md, explaining every piece of the code.
+A detailed walkthrough of the `--watch` mode implementation in lit-md, explaining every piece of the code.
 
 ## 1. Startup Phase
 
 **File: `cli.ts` lines 38-43**
 
 ```typescript
-const wait = extractFlag('--wait')
+const watch = extractFlag('--watch')
 ```
 
 When a user runs:
 
 ```bash
-lit-md --wait --test file.lit-md.ts
+lit-md --watch --test file.lit-md.ts
 ```
 
-The `extractFlag()` function checks if `--wait` is in the argument list. If found, it removes it from `args` and returns `true`. The `wait` variable is then used throughout the program to change behavior.
+The `extractFlag()` function checks if `--watch` is in the argument list. If found, it removes it from `args` and returns `true`. The `watch` variable is then used throughout the program to change behavior.
 
 ## 2. Entry Point - Main Async Function
 
@@ -26,7 +26,7 @@ The `extractFlag()` function checks if `--wait` is in the argument list. If foun
 ;(async () => {
   await executeTasks()  // ← Run ONCE on startup
 
-  if (wait && process.stdin.isTTY) {  // ← If --wait AND interactive terminal
+  if (watch && process.stdin.isTTY) {  // ← If --watch AND interactive terminal
     while (true) {                     // ← INFINITE LOOP
       const trigger = await watchFilesAndWait(inputPaths)
       await executeTasks()  // ← Run again on change/spacebar
@@ -39,12 +39,12 @@ This is where the main logic happens:
 
 1. **First run**: `executeTasks()` is called once immediately
 2. **Check conditions**: 
-   - `wait` = user passed `--wait` flag
+   - `wait` = user passed `--watch` flag
    - `process.stdin.isTTY` = terminal is interactive (not piped/redirected)
 3. **If both true**: Enter infinite loop that:
    - Waits for file changes or spacebar
    - Runs `executeTasks()` again
-   - Loops back to wait
+   - Loops back to watch
 
 If either condition is false, the program ends after the first run.
 
@@ -63,20 +63,20 @@ if (runTypecheck) {
   const result = typecheck(inputPaths.map(p => resolve(p)))
   if (!result.ok) {
     for (const msg of result.messages) console.error(msg)
-    // In wait mode, report error but continue; in normal mode, exit
-    if (!wait) process.exit(1)
+    // In watch mode, report error but continue; in normal mode, exit
+    if (!watch) process.exit(1)
     // Continue to markdown generation even if typecheck failed
   }
 }
 ```
 
-**Key difference in wait mode**: If typecheck fails, the program prints the error but **doesn't exit**. It continues to the next step. In normal mode, it would call `process.exit(1)` and stop.
+**Key difference in watch mode**: If typecheck fails, the program prints the error but **doesn't exit**. It continues to the next step. In normal mode, it would call `process.exit(1)` and stop.
 
 ### 3b) Run Tests (if `--test` flag used)
 
 **Lines 262-296**
 
-This is where the most significant difference between wait and normal mode occurs:
+This is where the most significant difference between watch and normal mode occurs:
 
 #### Normal Mode Output
 
@@ -98,7 +98,7 @@ const spawnOptions = wait ? { encoding: 'utf-8' as const } : { stdio: 'inherit' 
 - We can then process and summarize it before displaying
 
 ```typescript
-if (wait && result.stdout) {
+if (watch && result.stdout) {
   const output = result.stdout.toString()
   const stats = parseTestSummary(output)  // Extract pass/fail counts
   
@@ -117,12 +117,12 @@ if (wait && result.stdout) {
 }
 ```
 
-**In wait mode:**
+**In watch mode:**
 - If all tests pass: `✅ Tests passed: 5 passed` (one line)
 - If tests fail: Show failures section + count
 
 **Error handling:**
-- Tests failed in wait mode? Continue to markdown generation anyway
+- Tests failed in watch mode? Continue to markdown generation anyway
 - Tests failed in normal mode? Call `process.exit()` and stop
 
 ### 3c) Generate Markdown
@@ -133,13 +133,13 @@ if (wait && result.stdout) {
 await generateMarkdown()
 ```
 
-This always happens, even if typecheck or tests failed. This is crucial for wait mode - we want to regenerate the documentation on every change, even if there are errors.
+This always happens, even if typecheck or tests failed. This is crucial for watch mode - we want to regenerate the documentation on every change, even if there are errors.
 
 ## 4. Watch Loop: watchFilesAndWait()
 
 **File: `shell.ts` lines 275-353**
 
-This is the heart of the watch mechanism. It waits for either:
+This is the heart of the watch mechanism. It watches for either:
 1. A file to change, or
 2. The user to press spacebar
 
@@ -264,7 +264,7 @@ while (true) {
 
 After `watchFilesAndWait()` returns, `executeTasks()` is called again, which:
 1. Runs typecheck (if enabled)
-2. Runs tests with **condensed output** (in wait mode)
+2. Runs tests with **condensed output** (in watch mode)
 3. Generates markdown
 
 Then the loop goes back to waiting for the next change or spacebar press.
@@ -336,9 +336,9 @@ This is used to decide whether to show a simple summary or the failures section.
 ## 9. Execution Timeline
 
 ```
-Start: lit-md --wait --test file.lit-md.ts
+Start: lit-md --watch --test file.lit-md.ts
    │
-   ├─ Extract --wait flag → wait = true
+   ├─ Extract --watch flag → wait = true
    │
    ├─ First executeTasks() call
    │  ├─ Run tests → Show FULL output (stdio: 'inherit')
@@ -369,7 +369,7 @@ Start: lit-md --wait --test file.lit-md.ts
 
 ## Summary
 
-The `--wait` mode creates a development-friendly loop:
+The `--watch` mode creates a development-friendly loop:
 
 1. **Initial run**: Execute all tasks with full output for debugging
 2. **Watch and wait**: Monitor input files and their dependencies
@@ -378,4 +378,4 @@ The `--wait` mode creates a development-friendly loop:
 5. **Resilient to errors**: Keep running even if tests or typecheck fail
 6. **Clean exit**: Ctrl+C properly closes watchers and restores terminal
 
-This makes `--wait` ideal for iterative development where you're editing, testing, and regenerating documentation repeatedly.
+This makes `--watch` ideal for iterative development where you're editing, testing, and regenerating documentation repeatedly.

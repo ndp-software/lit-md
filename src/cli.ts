@@ -55,7 +55,7 @@ const dryrun = extractFlag('--dryrun')
 const runTests = extractFlag('--test')
 const runTypecheck = extractFlag('--typecheck')
 const updateSnapshots = extractFlag('--update-snapshots') || extractFlag('-u')
-const wait = extractFlag('--wait')
+const watch = extractFlag('--watch')
 const outFlag = extractFlagValue('--out')
 const outputDir = extractFlagValue('--outDir')
 const describeFormat = extractFlagValue('--describe') || '##'
@@ -125,7 +125,7 @@ Options:
   --typecheck               Run type checking before generating markdown
   --dryrun                  Show what would be written without writing files
   -u, --update-snapshots    Update snapshot files instead of generating markdown
-  --wait                    After generating, keep the process alive and watch for file
+  --watch                   After generating, keep the process alive and watch for file
                              changes. Press space to manually regenerate, Ctrl+C to exit.
                              Works with --test and --typecheck (reruns on each change).
   --out <output.md>         Write to a specific output file (requires single input)
@@ -145,7 +145,7 @@ By default, output is written to stdout. Use --out or --outDir to write to files
 Examples:
   lit-md README.md.test.ts                                  # outputs to stdout
   lit-md --test --typecheck README.md.test.ts               # outputs to stdout after testing
-  lit-md --wait README.md.test.ts                           # outputs to stdout, then waits for changes
+  lit-md --watch README.md.test.ts                          # outputs to stdout, then watches for changes
   lit-md --out /tmp/docs.md README.md.test.ts               # writes to file
   lit-md --outDir ./docs src/**/*.md.test.ts                # writes to directory
   lit-md --describe="#" README.md.test.ts                   # outputs to stdout with custom format
@@ -186,10 +186,10 @@ if (runTypecheck) {
 }
 
 // --- Typecheck ---
-// NOTE: Moved into executeTasks() to run on each regeneration when --wait is used
+// NOTE: Moved into executeTasks() to run on each regeneration when --watch is used
 
 // --- Run tests ---
-// NOTE: Moved into executeTasks() to run on each regeneration when --wait is used
+// NOTE: Moved into executeTasks() to run on each regeneration when --watch is used
 
 // --- Generate markdown ---
 
@@ -282,8 +282,8 @@ async function executeTasks(): Promise<void> {
     if (!result.ok) {
       for (const msg of result.messages) console.error(msg)
       console.error('❌ Typecheck failed')
-      // In wait mode, report error but continue; in normal mode, exit
-      if (!wait) process.exit(1)
+      // In watch mode, report error but continue; in normal mode, exit
+      if (!watch) process.exit(1)
       // Continue to markdown generation even if typecheck failed
     } else {
       console.error('✅ Typecheck passed')
@@ -298,8 +298,8 @@ async function executeTasks(): Promise<void> {
     // Always capture output to check for async errors, but show it in normal mode
     const result = spawnSync(process.execPath, nodeArgs, { encoding: 'utf-8' as const })
     
-    // Show output in normal (non-wait) mode
-    if (!wait) {
+    // Show output in normal (non-watch) mode
+    if (!watch) {
       if (result.stdout) process.stdout.write(result.stdout)
       if (result.stderr) process.stderr.write(result.stderr)
     }
@@ -309,8 +309,8 @@ async function executeTasks(): Promise<void> {
     
     // Handle output based on mode
     let stats = parseTestSummary(fullOutput)
-    if (wait && result.stdout) {
-      // In wait mode: show condensed summary instead of full output
+    if (watch && result.stdout) {
+      // In watch mode: show condensed summary instead of full output
       const output = result.stdout.toString()
       stats = parseTestSummary(output)
       
@@ -330,8 +330,8 @@ async function executeTasks(): Promise<void> {
     
     if (result.status !== 0 || stats.hasFailed) {
       const exitCode = result.status !== 0 ? result.status : 1
-      // In wait mode, report error but continue; in normal mode, exit
-      if (!wait) process.exit(exitCode ?? 1)
+      // In watch mode, report error but continue; in normal mode, exit
+      if (!watch) process.exit(exitCode ?? 1)
       // Continue to markdown generation even if tests failed
     }
   }
@@ -343,8 +343,8 @@ async function executeTasks(): Promise<void> {
 ;(async () => {
   await executeTasks()
 
-  // If --wait flag is set and we're in an interactive terminal, enter the watch loop
-  if (wait && process.stdin.isTTY) {
+  // If --watch flag is set and we're in an interactive terminal, enter the watch loop
+  if (watch && process.stdin.isTTY) {
     while (true) {
       const trigger = await watchFilesAndWait(inputPaths)
       // On spacebar or file change, regenerate
