@@ -380,11 +380,10 @@ async function generateMarkdown(): Promise<void> {
       const fileNameWithoutMd = outputFileName.slice(0, -3) // Remove .md
       outPath = join(dirname(resolve(inputPath)), `${fileNameWithoutMd}.snapshot.md`)
     } else if (matchSnapshot) {
-      // When matching snapshots, suppress stdout output
-      const snapshotDir = outputDir || dirname(resolve(inputPath))
-      const outputFileName = getOutputFileName(inputPath)
-      const fileNameWithoutMd = outputFileName.slice(0, -3) // Remove .md
-      outPath = join(snapshotDir, `${fileNameWithoutMd}.snapshot.md`)
+      // When matching snapshots, don't write files - just validate
+      // (snapshots will be written by matchSnapshots() if needed)
+      // Skip file writing entirely for snapshot validation
+      continue
     } else if (outFlag) {
       outPath = outFlag
     } else if (outputDir) {

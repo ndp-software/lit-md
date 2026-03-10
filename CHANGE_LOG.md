@@ -12,7 +12,7 @@
 
 ## Fixed
 
-- **CLI**: Asynchronous errors (unhandled rejections and exceptions) that occur after tests complete are now properly detected and cause the process to exit with a failure status (non-zero exit code). This ensures that errors like "A resource generated asynchronous activity after the test ended" are displayed as red failure indicators instead of being silently ignored. The CLI now also installs global error handlers to catch any unhandled errors and report them immediately.
+- **CLI**: Snapshot matching regression where `--match-snapshot` was silently updating snapshots instead of validating them. The issue occurred because snapshots were written to disk during markdown generation, then validation compared the generated content against the file that was just written (comparing against itself). Now `--match-snapshot` only validates without writing files - snapshots are only written when using `-u` (update) flag or when auto-generating missing snapshots. Added permanent regression test (`test/snapshot-regression.test.ts`) to prevent this issue from recurring.
 
 ## [0.4] - 2026-03-09
 
