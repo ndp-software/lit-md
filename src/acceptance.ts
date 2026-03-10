@@ -78,24 +78,6 @@ function getSnapshotPath(inputPath: string, snapshotDir: string): string {
 }
 
 /**
- * Discover all test files in a directory.
- * 
- * @param testDir - Directory to search for test files
- * @returns Array of file paths (absolute paths)
- */
-export function discoverTestFiles(testDir: string): string[] {
-  if (!existsSync(testDir)) {
-    return []
-  }
-  
-  const files = readdirSync(testDir, { withFileTypes: true })
-    .filter(d => d.isFile() && (d.name.endsWith('.ts') || d.name.endsWith('.js')))
-    .map(d => join(testDir, d.name))
-  
-  return files
-}
-
-/**
  * Match snapshots for test files. Compares generated markdown against snapshot files.
  * If snapshot is missing, auto-generates it (like the test/acceptance.ts behavior).
  * 
