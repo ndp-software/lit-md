@@ -92,6 +92,61 @@ function parseTestSummary(output: string): { passed: number; failed: number; tot
   return stats
 }
 
+/**
+ * Clean up test failure output by removing noisy stack traces and keeping just
+ * the meaningful error information.
+ */
+function cleanTestFailureOutput(output: string): string {
+  const lines = output.split('\n')
+  const cleanedLines: string[] = []
+  let inStackTrace = false
+  let skipNextBlankLine = false
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+    
+    // Skip internal Node.js test runner stack traces
+    if (trimmed.startsWith('at ') && (
+      trimmed.includes('_runShellExample') ||
+      trimmed.includes('TestContext') ||
+      trimmed.includes('Test.run') ||
+      trimmed.includes('Test.start') ||
+      trimmed.includes('Suite') ||
+      trimmed.includes('node:internal/test_runner')
+    )) {
+      inStackTrace = true
+      skipNextBlankLine = true
+      continue
+    }
+    
+    // Skip blank lines that follow stack traces
+    if (skipNextBlankLine && trimmed === '') {
+      skipNextBlankLine = false
+      continue
+    }
+    skipNextBlankLine = false
+    
+    // Keep lines that are part of error messages or not stack traces
+    if (!inStackTrace || !trimmed.startsWith('at ')) {
+      inStackTrace = false
+      cleanedLines.push(line)
+    }
+  }
+  
+  // Remove consecutive blank lines
+  const result: string[] = []
+  let lastWasBlank = false
+  for (const line of cleanedLines) {
+    const isBlank = line.trim() === ''
+    if (isBlank && lastWasBlank) continue
+    result.push(line)
+    lastWasBlank = isBlank
+  }
+  
+  return result.join('\n').trim()
+}
+
 // Check for unknown options
 const unknownOptions = args.filter(a => a.startsWith('--') || (a.startsWith('-') && a.length > 1 && a !== '-'))
 if (unknownOptions.length > 0) {
@@ -244,7 +299,7 @@ async function generateMarkdown(): Promise<void> {
     
     const src = readFileSync(inputPath, 'utf8')
     const lang = extname(inputPath) === '.js' ? 'javascript' : 'typescript'
-    let nodes = parse(src, lang)
+    let nodes = parse(src, lang, inputPath)
     if (!dryrun) {
       nodes = resolveOutputFiles(nodes)
     }
@@ -317,9 +372,12 @@ async function executeTasks(): Promise<void> {
     // Always capture output to check for async errors, but show it in normal mode
     const result = spawnSync(process.execPath, nodeArgs, { encoding: 'utf-8' as const })
     
-    // Show output in normal (non-watch) mode
+    // Show output in normal (non-watch) mode with cleaned stack traces
     if (!watch) {
-      if (result.stdout) process.stdout.write(result.stdout)
+      if (result.stdout) {
+        const cleanedOutput = cleanTestFailureOutput(result.stdout)
+        process.stdout.write(cleanedOutput ? cleanedOutput + '\n' : result.stdout)
+      }
       if (result.stderr) process.stderr.write(result.stderr)
     }
     
@@ -334,11 +392,12 @@ async function executeTasks(): Promise<void> {
       stats = parseTestSummary(output)
       
       if (stats.hasFailed) {
-        // Extract and show failures section
+        // Extract and show failures section with cleaned output
         const failureStart = output.indexOf('✖ failing tests')
         if (failureStart !== -1) {
           const failureSection = output.substring(failureStart)
-          console.error(failureSection)
+          const cleanedOutput = cleanTestFailureOutput(failureSection)
+          console.error(cleanedOutput)
         }
         console.error(`\n❌ Tests failed: ${stats.failed}/${stats.total} failed`)
       } else {

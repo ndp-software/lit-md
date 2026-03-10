@@ -4,6 +4,7 @@ import { isAbsolute, resolve, join, dirname, extname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
+import { ShellExampleError } from './error-context.ts'
 
 export { test as example, test as metaExample, describe } from 'node:test'
 
@@ -76,6 +77,8 @@ export interface ShellExampleOpts {
   meta?: boolean
   exitCode?: number
   timeout?: number  // Timeout in milliseconds, default 3000
+  // Internal: source location for error reporting
+  _sourceLocation?: { filePath: string; line: number; column: number }
 }
 
 /** Internal: executes a shell command and runs any assertions. Throws on failure.
@@ -94,18 +97,47 @@ export function _runShellExample(cmd: string, opts: ShellExampleOpts): void {
     
     // Check for timeout error
     if (result.error && (result.error as NodeJS.ErrnoException).code === 'ETIMEDOUT') {
-      throw new Error(`Command timed out after ${timeoutMs}ms: ${cmd}`)
+      const errMsg = `Command timed out after ${timeoutMs}ms: ${cmd}`
+      if (opts._sourceLocation) {
+        throw new ShellExampleError(errMsg, {
+          filePath: opts._sourceLocation.filePath,
+          line: opts._sourceLocation.line,
+          column: opts._sourceLocation.column
+        })
+      } else {
+        throw new Error(errMsg)
+      }
     }
     
     const actualExitCode = result.status ?? 1
     if (opts.exitCode !== undefined) {
       if (actualExitCode !== opts.exitCode) {
         const err = result.stderr || result.error?.message || ''
-        throw new Error(`Command failed: ${cmd}\nexit ${actualExitCode} (expected exit code ${opts.exitCode})${err ? ': ' + err : ''}`)
+        const errMsg = `Command failed: ${cmd}\nexit ${actualExitCode} (expected exit code ${opts.exitCode})${err ? ': ' + err : ''}`
+        
+        if (opts._sourceLocation) {
+          throw new ShellExampleError(errMsg, {
+            filePath: opts._sourceLocation.filePath,
+            line: opts._sourceLocation.line,
+            column: opts._sourceLocation.column
+          })
+        } else {
+          throw new Error(errMsg)
+        }
       }
     } else if (actualExitCode !== 0) {
       const err = result.stderr || result.error?.message || ''
-      throw new Error(`Command failed: ${cmd}\nexit ${actualExitCode}${err ? ': ' + err : ''}`)
+      const errMsg = `Command failed: ${cmd}\nexit ${actualExitCode}${err ? ': ' + err : ''}`
+      
+      if (opts._sourceLocation) {
+        throw new ShellExampleError(errMsg, {
+          filePath: opts._sourceLocation.filePath,
+          line: opts._sourceLocation.line,
+          column: opts._sourceLocation.column
+        })
+      } else {
+        throw new Error(errMsg)
+      }
     }
     const stdout = result.stdout
     if (opts.stdout !== undefined) {

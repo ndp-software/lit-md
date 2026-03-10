@@ -4,6 +4,8 @@ import { writeFileSync, mkdtempSync, rmSync, readFileSync } from 'node:fs'
 import { join, isAbsolute } from 'node:path'
 import { tmpdir } from 'node:os'
 import { buildAliasPrefix } from './shell.ts'
+import { ShellExampleError, getLineAndColumn } from './error-context.ts'
+import type { SourceLocation } from './error-context.ts'
 
 export type ProseNode = { kind: 'prose'; text: string; terminal?: true; noBlankAfter?: true; noBlankBefore?: true }
 export type CodeNode = { kind: 'code'; lang: string; text: string; title?: string }
@@ -26,7 +28,7 @@ export type OutputFileDisplayNode = {
 }
 export type DocNode = ProseNode | CodeNode | OutputFileDisplayNode | DescribeNode
 
-export function parse(src: string, lang = 'typescript'): DocNode[] {
+export function parse(src: string, lang = 'typescript', filePath?: string): DocNode[] {
   if (!src.trim()) return []
 
   const sf = ts.createSourceFile('input.ts', src, ts.ScriptTarget.Latest, true)
@@ -230,12 +232,34 @@ export function parse(src: string, lang = 'typescript'): DocNode[] {
             let execution: ShellCommandExecution | null = null
             if (opts && isExecutionNeeded(opts)) {
               const outputPaths = extractOutputFilePaths(opts)
-              execution = executeShellCommand(cmd, inputFiles, outputPaths, expectedExitCode)
+              
+              // Build source location for error reporting
+              let sourceLocation: SourceLocation | undefined = undefined
+              if (filePath) {
+                const charPos = expr.getStart()
+                const { line, column } = getLineAndColumn(src, charPos)
+                sourceLocation = {
+                  filePath,
+                  line,
+                  column
+                }
+              }
+              
+              execution = executeShellCommand(cmd, inputFiles, outputPaths, expectedExitCode, sourceLocation)
               
               // Fail if exit code doesn't match expectations
               if (execution && execution.exitCode !== expectedExitCode) {
-                throw new Error(
-                  `shellExample failed: ${cmd}\nexit ${execution.exitCode} (expected exit code ${expectedExitCode})`
+                const errorLocation = sourceLocation || {
+                  filePath: filePath || 'unknown',
+                  line: 0,
+                  column: 0
+                }
+                const charPos = expr.getStart()
+                throw new ShellExampleError(
+                  `shellExample failed: ${cmd}\nexit ${execution.exitCode} (expected exit code ${expectedExitCode})`,
+                  errorLocation,
+                  charPos,
+                  src
                 )
               }
             }
@@ -880,7 +904,13 @@ function extractOutputFilePaths(opts: ts.ObjectLiteralExpression): string[] {
 }
 
 /** Executes a shell command with optional input files and captures stdout + output files */
-function executeShellCommand(cmd: string, inputFiles: Array<InputFileInfo>, outputFilePaths: string[], expectedExitCode = 0): ShellCommandExecution | null {
+function executeShellCommand(
+  cmd: string,
+  inputFiles: Array<InputFileInfo>,
+  outputFilePaths: string[],
+  expectedExitCode = 0,
+  sourceLocation?: SourceLocation
+): ShellCommandExecution | null {
   const tmpDir = mkdtempSync(join(tmpdir(), 'lit-md-exec-'))
   const resolvePath = (p: string) => isAbsolute(p) ? p : join(tmpDir, p)
   try {
