@@ -99,7 +99,7 @@ shellExample('echo "first" && echo "second"')
 // ## With stdout Assertion
 //
 // Using `shellExample('node --version', { stdout: { contains: '24.11.1' }})` produces:
-shellExample('node --version', {stdout: { contains: '24.11.1' }})
+shellExample('echo "spam"', {stdout: { contains: "spam" }})
 
 // ## With Input and Output Files
 //

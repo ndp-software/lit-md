@@ -178,8 +178,8 @@ $ echo "first" && echo "second"
 Using `shellExample('node --version', { stdout: { contains: '24.11.1' }})` produces:
 
 ```sh
-$ node --version
-24.11.1
+$ echo "spam"
+spam
 ```
 
 ## With Input and Output Files
