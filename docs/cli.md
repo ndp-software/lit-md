@@ -14,6 +14,289 @@ $ lit-md tmp.ts
 # My Document
 ```
 
+### Running Tests
+
+Use --test to run tests before generating markdown. Failed tests will prevent markdown generation.
+
+```ts
+// Input file "tmp.ts":
+// # Testing
+// 
+// When you use --test, lit-md validates the code before generating markdown.
+
+```
+
+```sh
+$ lit-md --test tmp.ts
+✔ /tmp/lit-md-exec-HigFQR/tmp.ts (71.113438ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.331933
+# Testing
+
+When you use --test, lit-md validates the code before generating markdown.
+```
+
+### Type Checking
+
+Use --typecheck to validate TypeScript before generating markdown.
+
+```ts
+// Input file "tmp.ts":
+// # TypeScript
+const value: number = 42
+// Code that will pass typecheck
+// TypeScript validates the code
+
+```
+
+```sh
+$ lit-md --typecheck tmp.ts
+# TypeScript
+```
+
+### Watch Mode
+
+Use --watch to automatically regenerate when files change. Press space to regenerate manually, Ctrl+C to exit.
+
+```ts
+// Input file "tmp.ts":
+// # Watch Example
+import { example } from 'node:test'
+example('auto-regenerate', () => {})
+```
+
+```sh
+$ lit-md --watch tmp.ts
+# Watch Example
+```
+
+### Describe Formats
+
+#### hidden format
+
+The `hidden` format omits describe() block names from output. Only examples appear in the markdown.
+
+```ts
+// Input file "tmp.ts":
+// # My API
+import { describe, example } from 'node:test'
+import assert from 'node:assert/strict'
+describe('Math Functions', () => {
+  example('addition', () => {
+    assert.equal(1 + 1, 2)
+  })
+  example('subtraction', () => {
+    assert.equal(5 - 2, 3)
+  })
+})
+```
+
+````sh
+$ lit-md --describe=hidden tmp.ts
+# My API
+
+
+
+```ts
+1 + 1 // => 2
+
+5 - 2 // => 3
+```
+````
+
+#### ## (H2) format
+
+The `##` format (default) renders describe() blocks as H2 headers. Nested describes become H3, H4, etc.
+
+```ts
+// Input file "tmp.ts":
+// # My API
+import { describe, example } from 'node:test'
+import assert from 'node:assert/strict'
+describe('Math Functions', () => {
+  example('addition', () => {
+    assert.equal(1 + 1, 2)
+  })
+  describe('Advanced', () => {
+    example('complex calc', () => {
+      assert.equal((10 + 5) * 2, 30)
+    })
+  })
+})
+```
+
+````sh
+$ lit-md --describe="##" tmp.ts
+# My API
+
+## Math Functions
+
+```ts
+1 + 1 // => 2
+```
+
+### Advanced
+
+```ts
+(10 + 5) * 2 // => 30
+```
+````
+
+#### auto format
+
+The `auto` format adapts header levels to document structure. It starts at h1 if no headers exist, or one level deeper than the last header.
+
+```ts
+// Input file "tmp.ts":
+// # My API
+// Some introduction text
+import { describe, example } from 'node:test'
+import assert from 'node:assert/strict'
+describe('Math Functions', () => {
+  example('addition', () => {
+    assert.equal(1 + 1, 2)
+  })
+})
+```
+
+````sh
+$ lit-md --describe="auto" tmp.ts
+# My API
+Some introduction text
+
+## Math Functions
+
+```ts
+1 + 1 // => 2
+```
+````
+
+### Snapshot Matching
+
+#### validate against snapshots
+
+Use --match-snapshot to validate generated markdown against snapshot files. Snapshots are auto-generated if missing.
+
+```ts
+// Input file "tmp.ts":
+// # Feature
+import { example } from 'node:test'
+example('works', () => {})
+```
+
+```sh
+$ lit-md --match-snapshot tmp.ts
+```
+
+#### watch and validate snapshots
+
+Combine --match-snapshot with --watch for continuous validation during development.
+
+```ts
+// Input file "tmp.ts":
+// # Feature
+import { example } from 'node:test'
+example('works', () => {})
+```
+
+```sh
+$ lit-md --match-snapshot --watch tmp.ts
+```
+
+### Output Modes
+
+#### dry-run preview
+
+Use --dryrun to preview what would be generated and written without actually writing files.
+
+```ts
+// Input file "tmp.ts":
+// # Preview
+```
+
+```sh
+$ lit-md --dryrun --outDir ./docs tmp.ts
+# Input file `tmp.ts` contains `// # Preview`
+```
+
+#### write to directory
+
+Use --outDir to write generated markdown files to a specific directory. Filenames are derived from input files.
+
+```ts
+// Input file "tmp.ts":
+// # Documentation
+import { example } from 'node:test'
+example('sample', () => {})
+```
+
+```sh
+$ lit-md --outDir ./docs tmp.ts
+```
+
+Output file `./docs/tmp.md` contains `# Documentation`.
+
+### Common Combinations
+
+#### full validation pipeline
+
+Combine --test, --typecheck, and --watch for a complete development workflow with continuous validation.
+
+```ts
+// Input file "tmp.ts":
+// # Validated
+import { example } from 'node:test'
+import assert from 'node:assert/strict'
+const api: string = 'v1'
+example('test', () => {
+  assert.equal(1 + 1, 2)
+})
+```
+
+```sh
+$ lit-md --test --typecheck --watch tmp.ts
+# Validated
+```
+
+#### single file output with testing
+
+Combine --test with --out to run tests and write to a specific markdown file.
+
+```ts
+// Input file "tmp.ts":
+// # My Docs
+// 
+// This documentation was generated with --test validation.
+
+```
+
+```sh
+$ lit-md --test --out /tmp/docs.md tmp.ts
+```
+
+Output file `/tmp/docs.md` contains `# My Docs`.
+
+#### validate multiple files
+
+Use --match-snapshot with glob patterns to validate multiple test files at once.
+
+```ts
+// Input file "tmp.ts":
+// # API
+import { example } from 'node:test'
+example('endpoint', () => {})
+```
+
+```sh
+$ lit-md --match-snapshot tmp.ts
+```
+
 ### Custom output path
 
 Use --out to write to a different location.
@@ -46,10 +329,14 @@ Options:
   --typecheck               Run type checking before generating markdown
   --dryrun                  Show what would be written without writing files
   -u, --update-snapshots    Update snapshot files instead of generating markdown
+  --match-snapshot          After generating markdown, validate against snapshot files.
+                             Auto-generates snapshots if missing. Fails if mismatch found.
+                             Works with --test, --typecheck, and --watch.
   --watch                   After generating, keep the process alive and watch for file
                              changes. Press space to manually regenerate, Ctrl+C to exit.
-                             Works with --test and --typecheck (reruns on each change).
+                             Works with --test, --typecheck, and --match-snapshot.
   --out <output.md>         Write to a specific output file (requires single input)
+                             Cannot be used with --update-snapshots or --match-snapshot
   --outDir <dir>           Write generated markdown files to this directory
   --describe <format>       Control describe() block rendering (default: ##)
                             Formats:
@@ -67,6 +354,8 @@ Examples:
   lit-md README.md.test.ts                                  # outputs to stdout
   lit-md --test --typecheck README.md.test.ts               # outputs to stdout after testing
   lit-md --watch README.md.test.ts                          # outputs to stdout, then watches for changes
+  lit-md --match-snapshot test/acceptance/*.ts              # validates against snapshots
+  lit-md --match-snapshot --watch test/acceptance/*.ts      # watches and validates snapshots
   lit-md --out /tmp/docs.md README.md.test.ts               # writes to file
   lit-md --outDir ./docs src/**/*.md.test.ts                # writes to directory
   lit-md --describe="#" README.md.test.ts                   # outputs to stdout with custom format
