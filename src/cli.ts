@@ -8,6 +8,7 @@ import { typecheck } from './typecheck.ts'
 import { stripTypesFlag, watchFilesAndWait } from './shell.ts'
 import { resolveOutputFiles } from './resolver.ts'
 import { resolveDescribeFormat, resetDescribeFormat } from './describe-format.ts'
+import { matchSnapshots } from './acceptance.ts'
 
 // Handle unhandled promise rejections and exceptions
 let hasUnhandledError = false
@@ -55,6 +56,7 @@ const dryrun = extractFlag('--dryrun')
 const runTests = extractFlag('--test')
 const runTypecheck = extractFlag('--typecheck')
 const updateSnapshots = extractFlag('--update-snapshots') || extractFlag('-u')
+const matchSnapshot = extractFlag('--match-snapshot')
 const watch = extractFlag('--watch')
 const outFlag = extractFlagValue('--out')
 const outputDir = extractFlagValue('--outDir')
@@ -125,10 +127,14 @@ Options:
   --typecheck               Run type checking before generating markdown
   --dryrun                  Show what would be written without writing files
   -u, --update-snapshots    Update snapshot files instead of generating markdown
+  --match-snapshot          After generating markdown, validate against snapshot files.
+                             Auto-generates snapshots if missing. Fails if mismatch found.
+                             Works with --test, --typecheck, and --watch.
   --watch                   After generating, keep the process alive and watch for file
                              changes. Press space to manually regenerate, Ctrl+C to exit.
-                             Works with --test and --typecheck (reruns on each change).
+                             Works with --test, --typecheck, and --match-snapshot.
   --out <output.md>         Write to a specific output file (requires single input)
+                             Cannot be used with --update-snapshots or --match-snapshot
   --outDir <dir>           Write generated markdown files to this directory
   --describe <format>       Control describe() block rendering (default: ##)
                             Formats:
@@ -146,6 +152,8 @@ Examples:
   lit-md README.md.test.ts                                  # outputs to stdout
   lit-md --test --typecheck README.md.test.ts               # outputs to stdout after testing
   lit-md --watch README.md.test.ts                          # outputs to stdout, then watches for changes
+  lit-md --match-snapshot test/acceptance/*.ts              # validates against snapshots
+  lit-md --match-snapshot --watch test/acceptance/*.ts      # watches and validates snapshots
   lit-md --out /tmp/docs.md README.md.test.ts               # writes to file
   lit-md --outDir ./docs src/**/*.md.test.ts                # writes to directory
   lit-md --describe="#" README.md.test.ts                   # outputs to stdout with custom format
@@ -169,6 +177,11 @@ if (!validDescribeFormats.includes(describeFormat)) {
 
 if (outFlag && outputDir) {
   console.error('error: --out and --outDir are mutually exclusive')
+  process.exit(1)
+}
+
+if (outFlag && (updateSnapshots || matchSnapshot)) {
+  console.error('error: --out cannot be used with --update-snapshots or --match-snapshot')
   process.exit(1)
 }
 
@@ -338,6 +351,35 @@ async function executeTasks(): Promise<void> {
 
   // Generate markdown (always do this, even if tests/typecheck failed)
   await generateMarkdown()
+
+  // Run snapshot matching after generation (if enabled)
+  if (matchSnapshot) {
+    const snapshotDir = outputDir || inputPaths.map(p => dirname(resolve(p)))[0] || process.cwd()
+    const result = await matchSnapshots(inputPaths.map(p => resolve(p)), snapshotDir, describeFormat)
+    
+    if (result.failed > 0) {
+      // Show errors
+      for (const error of result.errors) {
+        if (error.message.includes('\n')) {
+          // It's a diff
+          console.error(`\n✖ ${error.file}:\n${error.message}`)
+        } else {
+          // It's an error message
+          console.error(`✖ ${error.file}: ${error.message}`)
+        }
+      }
+      console.error(`\n❌ Snapshot validation failed: ${result.failed}/${result.total} failed`)
+      // In watch mode, report error but continue; in normal mode, exit
+      if (!watch) process.exit(1)
+      // Continue watch loop even if snapshots failed
+    } else {
+      if (watch) {
+        console.error(`✅ Snapshots matched: ${result.passed} passed`)
+      } else {
+        console.error(`✅ Snapshots matched: ${result.passed} passed`)
+      }
+    }
+  }
 }
 
 ;(async () => {

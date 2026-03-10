@@ -31,19 +31,23 @@
     "src/**/*"
   ],
   "scripts": {
-    "prepublishOnly": "npm run verify && npm run build",
     "readme": "node ./src/cli.ts --test --typecheck --out ./README.md src/docs/README.lit-md.ts",
+
     "test": "node --test './test/**/*.test.ts'",
-    "test:watch": "node --test --watch './test/**/*.test.ts'",
-    "test:acceptance": "node --test test/acceptance.ts",
-    "test:update": "node src/cli.ts -u test/acceptance/*.ts test/acceptance/*.js",
+    "test:acceptance": "node src/cli.ts --match-snapshot test/acceptance/*.ts test/acceptance/*.js",
+    "test:acceptance:update": "node src/cli.ts -u test/acceptance/*.ts test/acceptance/*.js",
+
     "typecheck": "tsc -p ./tsconfig.check.json",
+
     "verify": "npm run typecheck && npm run test && node ./src/cli.ts --test --typecheck --dryrun src/docs/README.lit-md.ts",
+
     "build": "npm run build:types && npm run build:js",
     "build:all": "npm run clean && npm run readme && npm run build",
     "build:types": "tsc -p tsconfig.build.json",
     "build:js": "esbuild ./src/cli.ts --bundle --format=esm --platform=node --target=es2022 --sourcemap --external:typescript --outfile=./dist/cli.js",
     "build:docs": "node ./src/cli.ts --test --typecheck --out ./docs/cli.md ./src/docs/cli.lit-md.ts && node ./src/cli.ts --test --typecheck --out ./docs/shell-examples.md ./src/docs/shell-examples.lit-md.ts",
+
+    "prepublishOnly": "npm run clean && npm run verify && npm run build",
     "clean": "rm -rf dist"
   },
   "devDependencies": {

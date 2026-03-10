@@ -1,3 +1,8 @@
+// DEPRECATED: This file is kept for backward compatibility. 
+// Use `lit-md --match-snapshot` CLI flag instead. See package.json scripts:
+// - test:match: Run snapshot validation
+// - test:match:watch: Run snapshot validation in watch mode
+
 import {describe, test} from 'node:test'
 import {readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync, existsSync} from 'node:fs'
 import {spawnSync} from 'node:child_process'
