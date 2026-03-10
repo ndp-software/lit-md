@@ -1,9 +1,24 @@
 import { spawnSync } from 'node:child_process'
+import { writeFileSync } from 'node:fs'
 import { strictEqual } from 'node:assert/strict'
 import { describe, example } from '../src/index.ts'
 
 describe('Snapshot Matching Regression', () => {
   example('--match-snapshot should fail when snapshot does not match generated content', () => {
+    // Create temporary test files
+    writeFileSync(
+      '/tmp/temp-regression.lit-md.ts',
+      `import { describe, example } from './src/index.ts'
+describe('Regression Test', () => { example('test', () => { console.log('This is the generated content') }) })`
+    )
+
+    writeFileSync(
+      '/tmp/temp-regression.snapshot.md',
+      `# WRONG CONTENT - THIS SHOULD NOT MATCH
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
+    )
+
     // This test ensures the snapshot matching regression from March 2026 doesn't happen again.
     // The regression: snapshot files were being written BEFORE validation occurred, so validation
     // always passed (comparing a file against itself). This test verifies snapshot validation
