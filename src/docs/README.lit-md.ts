@@ -61,7 +61,7 @@ Add `@ndp-software/lit-md` to your project
 
 Then create a readme. The following is an example for a hypohetical "mathlib" project. Here's the source file:
 */
-shellExample(`lit-md mathlib-readme.ts`, {
+shellExample(`lit-md mathlib-readme.ts --out mathlib-readme.md`, {
   inputFiles: [{
     path: 'maths.ts',
     displayPath: false,
@@ -82,14 +82,11 @@ return x * y
     content: `import { describe, example } from '@ndp-software/lit-md'
 import assert from 'node:assert/strict'
 
-import { add, multiply } from './maths.ts'
-
 describe('My Project README.', () => {
-  /*
-  This is a really great project! 
-  Adding numbers is as simple as using the "+" operator:
-  */
+// This is a really great project! 
+// Adding numbers is as simple as using the "+" operator:
   example('add example', () => {
+    import { add, multiply } from './maths.ts'
     const a = 1
     const b = 2
     assert.equal(add(a, b), 3)
@@ -105,10 +102,9 @@ describe('My Project README.', () => {
 `
   }],
   displayCommand: true,
-  stdout: {
-    display: true,
-    contains: 'This is a really great project!'
-  }
+  outputFiles: [{
+    path: 'mathlib-readme.md'
+  }]
 })
 
 /*

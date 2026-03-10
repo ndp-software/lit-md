@@ -53,14 +53,11 @@ Then create a readme. The following is an example for a hypohetical "mathlib" pr
 import { describe, example } from '@ndp-software/lit-md'
 import assert from 'node:assert/strict'
 
-import { add, multiply } from './maths.ts'
-
 describe('My Project README.', () => {
-  /*
-  This is a really great project! 
-  Adding numbers is as simple as using the "+" operator:
-  */
+// This is a really great project! 
+// Adding numbers is as simple as using the "+" operator:
   example('add example', () => {
+    import { add, multiply } from './maths.ts'
     const a = 1
     const b = 2
     assert.equal(add(a, b), 3)
@@ -76,13 +73,18 @@ describe('My Project README.', () => {
 
 ```
 
-````sh
-$ lit-md mathlib-readme.ts
+```sh
+$ lit-md mathlib-readme.ts --out mathlib-readme.md
+```
+
+Output file `mathlib-readme.md`:
+````markdown
 ## My Project README.
 
 This is a really great project! 
-  Adding numbers is as simple as using the "+" operator:
+Adding numbers is as simple as using the "+" operator:
 ```ts
+import { add, multiply } from './maths.ts'
 const a = 1
 const b = 2
 add(a, b) // => 3
