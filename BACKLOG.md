@@ -44,3 +44,7 @@ Deliverables (saved in session workspace)
 Total effort for complete feature parity: 6-10 weeks
 
 Start with quick_reference.md or INDEX.md in the session workspace for easy navigation!
+
+--watch mode needs some indicator of when the batch starts
+
+Make sure that when a command times out that it doesn't leave a process running.

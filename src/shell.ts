@@ -199,6 +199,36 @@ export function _runShellExample(cmd: string, opts: ShellExampleOpts): void {
 /** Registers a node:test test that executes the shell command and verifies assertions. */
 export function shellExample(cmd: string, opts: ShellExampleOpts = {}): void {
   const timeoutMs = opts.timeout ?? 3000
+  
+  // If source location is not provided, try to extract it from the call stack
+  if (!opts._sourceLocation) {
+    const stack = new Error().stack
+    if (stack) {
+      const lines = stack.split('\n')
+      // Skip the first few lines (Error, at shellExample) and find the actual caller
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i]
+        // Skip internal Node.js frames and frames from shell.ts itself
+        if (line.includes('node:') || line.includes('node_modules') || line.includes('shell.ts')) {
+          continue
+        }
+        
+        // Extract file path and line number from stack frame
+        // Matches both: file:///path/to/file.ts:line:col and /path/to/file.ts:line:col
+        const match = line.match(/\(?file:\/\/(.+):(\d+):(\d+)\)?$/) ||
+                     line.match(/\(?([^:()]+):(\d+):(\d+)\)?$/)
+        if (match) {
+          opts._sourceLocation = {
+            filePath: match[1],
+            line: parseInt(match[2], 10),
+            column: parseInt(match[3], 10)
+          }
+          break
+        }
+      }
+    }
+  }
+  
   test(cmd, { timeout: timeoutMs }, () => _runShellExample(cmd, opts))
 }
 

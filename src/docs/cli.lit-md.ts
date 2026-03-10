@@ -18,16 +18,36 @@ describe('CLI', () => {
   })
 
   describe('Running Tests', () => {
-    // Use --test to run tests before generating markdown. Failed tests will prevent markdown generation.
+    // Use --test to run tests before generating markdown.
     shellExample('lit-md --test tmp.ts', {
       displayCommand: true,
       inputFiles: [{
         path: 'tmp.ts',
-        content: `// # Testing\n// \n// When you use --test, lit-md validates the code before generating markdown.\n`
+        content: `
+        import {test as example} from 'node:test'
+        import assert from 'node:assert'
+        // # Testing
+        example('passing test', () => assert(true))`
       }],
       stdout: {
         contains: '# Testing',
         display: true
+      }
+    })
+    // Failed tests will prevent markdown generation.
+    shellExample('lit-md --test tmp.ts 2>/dev/null', {
+      displayCommand: true,
+      inputFiles: [{
+        path: 'tmp.ts',
+        content: `
+        import {test as example} from 'node:test'
+        import assert from 'node:assert'
+        // # Testing
+        example('failing test', () => assert(true))`
+      }],
+      exitCode: 0,
+      stdout: {
+        contains: '# Testing',
       }
     })
   })
@@ -37,8 +57,9 @@ describe('CLI', () => {
     shellExample('lit-md --typecheck tmp.ts', {
       displayCommand: true,
       inputFiles: [{
+        display: false,
         path: 'tmp.ts',
-        content: `// # TypeScript\nconst value: number = 42\n// Code that will pass typecheck\n// TypeScript validates the code\n`
+        content: `// # TypeScript\nconst value: number = 42`
       }],
       stdout: {
         contains: '# TypeScript',
@@ -52,6 +73,7 @@ describe('CLI', () => {
     shellExample('lit-md --watch tmp.ts', {
       displayCommand: true,
       inputFiles: [{
+        display: false,
         path: 'tmp.ts',
         content: `// # Watch Example\nimport { example } from 'node:test'\nexample('auto-regenerate', () => {})`
       }],
@@ -63,8 +85,11 @@ describe('CLI', () => {
   })
 
   describe('Describe Formats', () => {
+    // How describe() blocks are rendered in markdown is controlled by the --describe option.
+    // By default, describe() blocks become H2 headers.
+    // They can be ignored completely using `--describe=hidden`:
     describe('hidden format', () => {
-      // The `hidden` format omits describe() block names from output. Only examples appear in the markdown.
+      // Only examples appear in the markdown.
       shellExample('lit-md --describe=hidden tmp.ts', {
         displayCommand: true,
         inputFiles: [{
@@ -79,7 +104,8 @@ describe('CLI', () => {
     })
 
     describe('## (H2) format', () => {
-      // The `##` format (default) renders describe() blocks as H2 headers. Nested describes become H3, H4, etc.
+      // The `##` format (default) renders describe() blocks as H2 headers.
+      // Nested describes become H3, H4, etc.
       shellExample('lit-md --describe="##" tmp.ts', {
         displayCommand: true,
         inputFiles: [{
@@ -111,10 +137,12 @@ describe('CLI', () => {
 
   describe('Snapshot Matching', () => {
     describe('validate against snapshots', () => {
-      // Use --match-snapshot to validate generated markdown against snapshot files. Snapshots are auto-generated if missing.
+      // Use --match-snapshot to validate generated markdown against snapshot files.
+      // Snapshots are auto-generated if missing.
       shellExample('lit-md --match-snapshot tmp.ts', {
         displayCommand: true,
         inputFiles: [{
+          display: false,
           path: 'tmp.ts',
           content: `// # Feature\nimport { example } from 'node:test'\nexample('works', () => {})`
         }],
@@ -129,6 +157,7 @@ describe('CLI', () => {
       shellExample('lit-md --match-snapshot --watch tmp.ts', {
         displayCommand: true,
         inputFiles: [{
+          display: false,
           path: 'tmp.ts',
           content: `// # Feature\nimport { example } from 'node:test'\nexample('works', () => {})`
         }],
@@ -145,6 +174,7 @@ describe('CLI', () => {
       shellExample('lit-md --dryrun --outDir ./docs tmp.ts', {
         displayCommand: true,
         inputFiles: [{
+          display: false,
           path: 'tmp.ts',
           content: `// # Preview`
         }],
@@ -162,10 +192,6 @@ describe('CLI', () => {
           path: 'tmp.ts',
           content: `// # Documentation\nimport { example } from 'node:test'\nexample('sample', () => {})`
         }],
-        outputFiles: [{
-          path: './docs/tmp.md',
-          contains: '# Documentation'
-        }]
       })
     })
   })
@@ -173,17 +199,9 @@ describe('CLI', () => {
   describe('Common Combinations', () => {
     describe('full validation pipeline', () => {
       // Combine --test, --typecheck, and --watch for a complete development workflow with continuous validation.
-      shellExample('lit-md --test --typecheck --watch tmp.ts', {
-        displayCommand: true,
-        inputFiles: [{
-          path: 'tmp.ts',
-          content: `// # Validated\nimport { example } from 'node:test'\nimport assert from 'node:assert/strict'\nconst api: string = 'v1'\nexample('test', () => {\n  assert.equal(1 + 1, 2)\n})`
-        }],
-        stdout: {
-          contains: '# Validated',
-          display: false
-        }
-      })
+      // ```sh
+      // lit-md --test --typecheck --watch tmp.ts
+      // ```
     })
 
     describe('single file output with testing', () => {

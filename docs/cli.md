@@ -16,19 +16,20 @@ $ lit-md tmp.ts
 
 ### Running Tests
 
-Use --test to run tests before generating markdown. Failed tests will prevent markdown generation.
+Use --test to run tests before generating markdown.
 
 ```ts
 // Input file "tmp.ts":
-// # Testing
-// 
-// When you use --test, lit-md validates the code before generating markdown.
 
+        import {test as example} from 'node:test'
+        import assert from 'node:assert'
+        // # Testing
+        example('passing test', () => assert(true))
 ```
 
-```sh
+````sh
 $ lit-md --test tmp.ts
-✔ /tmp/lit-md-exec-HigFQR/tmp.ts (71.113438ms)
+✔ passing test (2.466748ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
@@ -36,24 +37,40 @@ $ lit-md --test tmp.ts
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 81.331933
+ℹ duration_ms 726.584043
 # Testing
+```ts
+assert(true)
+```
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 189.894967
+````
 
-When you use --test, lit-md validates the code before generating markdown.
+Failed tests will prevent markdown generation.
+
+```ts
+// Input file "tmp.ts":
+
+        import {test as example} from 'node:test'
+        import assert from 'node:assert'
+        // # Testing
+        example('failing test', () => assert(true))
+```
+
+```sh
+$ lit-md --test tmp.ts 2>/dev/null
+# Testing
 ```
 
 ### Type Checking
 
 Use --typecheck to validate TypeScript before generating markdown.
-
-```ts
-// Input file "tmp.ts":
-// # TypeScript
-const value: number = 42
-// Code that will pass typecheck
-// TypeScript validates the code
-
-```
 
 ```sh
 $ lit-md --typecheck tmp.ts
@@ -64,13 +81,6 @@ $ lit-md --typecheck tmp.ts
 
 Use --watch to automatically regenerate when files change. Press space to regenerate manually, Ctrl+C to exit.
 
-```ts
-// Input file "tmp.ts":
-// # Watch Example
-import { example } from 'node:test'
-example('auto-regenerate', () => {})
-```
-
 ```sh
 $ lit-md --watch tmp.ts
 # Watch Example
@@ -78,9 +88,13 @@ $ lit-md --watch tmp.ts
 
 ### Describe Formats
 
+How describe() blocks are rendered in markdown is controlled by the --describe option.
+By default, describe() blocks become H2 headers.
+They can be ignored completely using `--describe=hidden`:
+
 #### hidden format
 
-The `hidden` format omits describe() block names from output. Only examples appear in the markdown.
+Only examples appear in the markdown.
 
 ```ts
 // Input file "tmp.ts":
@@ -112,7 +126,8 @@ $ lit-md --describe=hidden tmp.ts
 
 #### ## (H2) format
 
-The `##` format (default) renders describe() blocks as H2 headers. Nested describes become H3, H4, etc.
+The `##` format (default) renders describe() blocks as H2 headers.
+Nested describes become H3, H4, etc.
 
 ```ts
 // Input file "tmp.ts":
@@ -181,14 +196,8 @@ Some introduction text
 
 #### validate against snapshots
 
-Use --match-snapshot to validate generated markdown against snapshot files. Snapshots are auto-generated if missing.
-
-```ts
-// Input file "tmp.ts":
-// # Feature
-import { example } from 'node:test'
-example('works', () => {})
-```
+Use --match-snapshot to validate generated markdown against snapshot files.
+Snapshots are auto-generated if missing.
 
 ```sh
 $ lit-md --match-snapshot tmp.ts
@@ -197,13 +206,6 @@ $ lit-md --match-snapshot tmp.ts
 #### watch and validate snapshots
 
 Combine --match-snapshot with --watch for continuous validation during development.
-
-```ts
-// Input file "tmp.ts":
-// # Feature
-import { example } from 'node:test'
-example('works', () => {})
-```
 
 ```sh
 $ lit-md --match-snapshot --watch tmp.ts
@@ -214,11 +216,6 @@ $ lit-md --match-snapshot --watch tmp.ts
 #### dry-run preview
 
 Use --dryrun to preview what would be generated and written without actually writing files.
-
-```ts
-// Input file "tmp.ts":
-// # Preview
-```
 
 ```sh
 $ lit-md --dryrun --outDir ./docs tmp.ts
@@ -240,29 +237,9 @@ example('sample', () => {})
 $ lit-md --outDir ./docs tmp.ts
 ```
 
-Output file `./docs/tmp.md` contains `# Documentation`.
-
 ### Common Combinations
 
 #### full validation pipeline
-
-Combine --test, --typecheck, and --watch for a complete development workflow with continuous validation.
-
-```ts
-// Input file "tmp.ts":
-// # Validated
-import { example } from 'node:test'
-import assert from 'node:assert/strict'
-const api: string = 'v1'
-example('test', () => {
-  assert.equal(1 + 1, 2)
-})
-```
-
-```sh
-$ lit-md --test --typecheck --watch tmp.ts
-# Validated
-```
 
 #### single file output with testing
 
