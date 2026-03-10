@@ -147,6 +147,72 @@ function cleanTestFailureOutput(output: string): string {
   return result.join('\n').trim()
 }
 
+/**
+ * Build a map of shell commands to their line numbers in source files.
+ * This allows us to show where a failing shellExample call is in the source.
+ */
+function buildCommandLineMap(inputPaths: string[]): Map<string, Array<{ file: string; line: number }>> {
+  const commandMap = new Map<string, Array<{ file: string; line: number }>>()
+  
+  for (const inputPath of inputPaths) {
+    try {
+      const content = readFileSync(inputPath, 'utf-8')
+      const lines = content.split('\n')
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        // Match shellExample('command', ...) patterns
+        const match = line.match(/shellExample\s*\(\s*['"`]([^'"`]+)['"`]/)
+        if (match) {
+          const cmd = match[1]
+          if (!commandMap.has(cmd)) {
+            commandMap.set(cmd, [])
+          }
+          commandMap.get(cmd)!.push({
+            file: basename(inputPath),
+            line: i + 1
+          })
+        }
+      }
+    } catch {
+      // Skip files that can't be read
+    }
+  }
+  
+  return commandMap
+}
+
+/**
+ * Enhance test failure output by adding line numbers from source files
+ * when a shell command error is detected.
+ */
+function enhanceTestOutputWithLineNumbers(output: string, commandMap: Map<string, Array<{ file: string; line: number }>>): string {
+  const lines = output.split('\n')
+  const enhanced: string[] = []
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    enhanced.push(line)
+    
+    // Look for error messages that start with "Error: Command failed:"
+    if (line.includes('Error: Command failed:')) {
+      // Extract the command from the error message
+      const commandMatch = line.match(/Error: Command failed: ([^\n]+)/)
+      if (commandMatch) {
+        const cmd = commandMatch[1].trim()
+        const locations = commandMap.get(cmd)
+        if (locations && locations.length > 0) {
+          // Add a line showing where the command is defined
+          const locationStrs = locations.map(loc => `${loc.file}:${loc.line}`).join(', ')
+          enhanced.push(`  at ${locationStrs}`)
+        }
+      }
+    }
+  }
+  
+  return enhanced.join('\n')
+}
+
 // Check for unknown options
 const unknownOptions = args.filter(a => a.startsWith('--') || (a.startsWith('-') && a.length > 1 && a !== '-'))
 if (unknownOptions.length > 0) {
@@ -366,17 +432,21 @@ async function executeTasks(): Promise<void> {
 
   // Run tests before generation (if enabled)
   if (runTests) {
+    // Build a map of commands to their source file locations
+    const commandMap = buildCommandLineMap(inputPaths)
+    
     const stripFlag = stripTypesFlag()
     const nodeArgs = ['--test', ...(stripFlag ? [stripFlag] : []), ...inputPaths.map(p => resolve(p))]
     
     // Always capture output to check for async errors, but show it in normal mode
     const result = spawnSync(process.execPath, nodeArgs, { encoding: 'utf-8' as const })
     
-    // Show output in normal (non-watch) mode with cleaned stack traces
+    // Show output in normal (non-watch) mode with cleaned stack traces and line numbers
     if (!watch) {
       if (result.stdout) {
-        const cleanedOutput = cleanTestFailureOutput(result.stdout)
-        process.stdout.write(cleanedOutput ? cleanedOutput + '\n' : result.stdout)
+        let output = cleanTestFailureOutput(result.stdout)
+        output = enhanceTestOutputWithLineNumbers(output, commandMap)
+        process.stdout.write(output ? output + '\n' : result.stdout)
       }
       if (result.stderr) process.stderr.write(result.stderr)
     }
@@ -388,16 +458,17 @@ async function executeTasks(): Promise<void> {
     let stats = parseTestSummary(fullOutput)
     if (watch && result.stdout) {
       // In watch mode: show condensed summary instead of full output
-      const output = result.stdout.toString()
+      let output = result.stdout.toString()
       stats = parseTestSummary(output)
       
       if (stats.hasFailed) {
-        // Extract and show failures section with cleaned output
+        // Extract and show failures section with cleaned output and line numbers
         const failureStart = output.indexOf('✖ failing tests')
         if (failureStart !== -1) {
-          const failureSection = output.substring(failureStart)
-          const cleanedOutput = cleanTestFailureOutput(failureSection)
-          console.error(cleanedOutput)
+          let failureSection = output.substring(failureStart)
+          failureSection = cleanTestFailureOutput(failureSection)
+          failureSection = enhanceTestOutputWithLineNumbers(failureSection, commandMap)
+          console.error(failureSection)
         }
         console.error(`\n❌ Tests failed: ${stats.failed}/${stats.total} failed`)
       } else {
