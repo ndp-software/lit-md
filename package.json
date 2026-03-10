@@ -34,10 +34,9 @@
     "readme": "node ./src/cli.ts --test --typecheck --out ./README.md src/docs/README.lit-md.ts",
 
     "test": "node --test './test/**/*.test.ts'",
-    "test:acceptance": "node --test test/acceptance.ts",
+    "test:acceptance": "node src/cli.ts --match-snapshot test/acceptance/*.ts test/acceptance/*.js",
     "test:acceptance:update": "node src/cli.ts -u test/acceptance/*.ts test/acceptance/*.js",
     "test:match": "node src/cli.ts --match-snapshot test/acceptance/*.ts test/acceptance/*.js",
-    "test:match:watch": "node src/cli.ts --match-snapshot --watch test/acceptance/*.ts test/acceptance/*.js",
 
     "typecheck": "tsc -p ./tsconfig.check.json",
 

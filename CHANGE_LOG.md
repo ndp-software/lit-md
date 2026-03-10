@@ -4,7 +4,7 @@
 
 ## Added
 
-- **CLI**: `--match-snapshot` flag for snapshot-based validation. Compares generated markdown against `.snapshot.md` files. Auto-generates snapshots if missing (same behavior as `test/acceptance.ts`). Works with `--test`, `--typecheck`, and `--watch` flags. Fails with a diff if snapshot doesn't match, useful for ensuring markdown consistency across changes. New npm scripts `test:match` and `test:match:watch` provide convenient snapshot validation workflows.
+- **CLI**: `--match-snapshot` flag for snapshot-based validation. Compares generated markdown against `.snapshot.md` files. Auto-generates snapshots if missing (same behavior as `test/acceptance.ts`). Works with `--test`, `--typecheck`, and `--watch` flags. Fails with a diff if snapshot doesn't match, useful for ensuring markdown consistency across changes. New npm script `test:match` provide convenient snapshot validation workflows.
 
 ## Breaking Changes
 
