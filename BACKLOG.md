@@ -9,42 +9,31 @@ npm run test:update should be `test:acceptance:update`, as it only applies to ac
 ## PUBLISHING
 
 
+- [ ] --watch mode needs some indicator of when the batch starts
+- [ ] Make sure that when a command times out that it doesn't leave a process running.
+- [ ] `const args = process.argv.slice(2)` Does this work with `node ../bin/lit-md` as well as `lit-md`?
+- [ ] OK if tests are output when --test option is given, but this should not appear a second time while the MD is being generated.
+- [ ] executeTasks seems overly complicated with non-sensicle switches on "watch" mode.
+- [ ] describe blocks without examples or shell examples should still output their commented markdown
+- [ ] 
 
-Current State
 
-- 17/18 assertion methods work functionally (tests must pass to render)
-- 94% coverage with functional limitations
-- No async/await support in code examples
-- Assertion metadata not exposed to documentation
 
-4 Critical Gaps
+## Indentation
 
-1. Assertion Metadata Rendering (affects ALL 18 methods)
-   - Assertions run silently; no documentation of what was tested
-   - 1-2 weeks effort, highest impact
-2. Async Assertions (2 missing methods)
-   - assert.rejects() and assert.doesNotReject() unsupported
-   - Requires async/await support in code examples
-   - 2-3 weeks effort
-3. Error Object Validation (incomplete)
-   - Limited support for complex error matching
-   - 2-3 weeks effort
-4. Assertion Class Configuration (not supported)
-   - new assert.Assert([options]) not available
-   - 1 week effort
+This code in cli.lit-md.ts needs better indention:
+Failed tests will prevent markdown generation.
 
-Deliverables (saved in session workspace)
+```ts
+// Input file "tmp.ts":
 
-1. quick_reference.md - 5-minute executive summary
-2. gap_analysis.md - 11,200-word comprehensive analysis with code examples
-3. implementation_roadmap.md - 5-phase detailed plan with file changes
-4. INDEX.md - Master navigation guide
-5. SQL tracking table - 18 rows documenting all methods
+        import {test as example} from 'node:test'
+        import assert from 'node:assert'
+        // # Testing
+        example('failing test', () => assert(true))
+```
+Two cases:
+- starts inline
+- starts on the following line
 
-Total effort for complete feature parity: 6-10 weeks
-
-Start with quick_reference.md or INDEX.md in the session workspace for easy navigation!
-
---watch mode needs some indicator of when the batch starts
-
-Make sure that when a command times out that it doesn't leave a process running.
+Algorithm: grab the whole code block. If the first line has zero indention, ignore it. Take all the lines of the code example and count their leading spaces. Use the minimum of this as the "offset", and remove that many spaces from each line of the code sample, except the first

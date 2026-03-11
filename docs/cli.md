@@ -4,15 +4,26 @@ By default, output is written to stdout.
 
 ```ts
 // Input file "tmp.ts":
-// # My Document
 import { example } from 'node:test'
-example('test', () => {})
+      
+// # My Documentation
+      
+example('test', () => {
+  const a = 0.5
+  const b = 0.25
+  const c = a + b
+})
 ```
 
-```sh
+````sh
 $ lit-md tmp.ts
-# My Document
+# My Documentation
+```ts
+const a = 0.5
+const b = 0.25
+const c = a + b
 ```
+````
 
 ### Running Tests
 
@@ -21,15 +32,15 @@ Use --test to run tests before generating markdown.
 ```ts
 // Input file "tmp.ts":
 
-        import {test as example} from 'node:test'
-        import assert from 'node:assert'
-        // # Testing
-        example('passing test', () => assert(true))
+import {test as example} from 'node:test'
+import assert from 'node:assert'
+// # Testing
+example('passing test', () => assert(true))
 ```
 
 ````sh
 $ lit-md --test tmp.ts
-✔ passing test (2.466748ms)
+✔ passing test (2.716607ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
@@ -37,7 +48,7 @@ $ lit-md --test tmp.ts
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 726.584043
+ℹ duration_ms 272.023144
 # Testing
 ```ts
 assert(true)
@@ -49,55 +60,37 @@ assert(true)
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 189.894967
+ℹ duration_ms 126.580156
 ````
 
-Failed tests will prevent markdown generation.
-
-```ts
-// Input file "tmp.ts":
-
-        import {test as example} from 'node:test'
-        import assert from 'node:assert'
-        // # Testing
-        example('failing test', () => assert(true))
-```
-
-```sh
-$ lit-md --test tmp.ts 2>/dev/null
-# Testing
-```
-
+Failed tests will prevent (flawed) markdown generation.
 ### Type Checking
-
 Use --typecheck to validate TypeScript before generating markdown.
-
 ```sh
 $ lit-md --typecheck tmp.ts
-# TypeScript
 ```
-
 ### Watch Mode
-
 Use --watch to automatically regenerate when files change. Press space to regenerate manually, Ctrl+C to exit.
-
 ```sh
-$ lit-md --watch tmp.ts
-# Watch Example
+$lit-md --watch tmp.ts
 ```
 
 ### Describe Formats
 
-How describe() blocks are rendered in markdown is controlled by the --describe option.
-By default, describe() blocks become H2 headers.
-They can be ignored completely using `--describe=hidden`:
+There are two approaches to building out **lit-md** files: with or without describe blocks.
+#### Without Describe blocks
+Although **lit-md** files are test files, there's no need to use `describe` blocks 
+to nest or group your checks. Your source files will look more like traditional documentation
+if comment lines and hash marks are use, eg. `// ### Contributing`.
 
-#### hidden format
-
-Only examples appear in the markdown.
+#### With Describe blocks
+Describe blocks can also be used like they are in test suites.
+By default, top-level `describe()` descriptions become H2 headers, and describes inside describes
+become H3s, etc.
 
 ```ts
 // Input file "tmp.ts":
+
 // # My API
 import { describe, example } from 'node:test'
 import assert from 'node:assert/strict'
@@ -105,8 +98,52 @@ describe('Math Functions', () => {
   example('addition', () => {
     assert.equal(1 + 1, 2)
   })
+  describe('Advanced', () => {
+    example('complex calc', () => {
+      assert.equal((10 + 5) * 2, 30)
+    })
+  })
+})
+```
+
+````sh
+$ lit-md tmp.ts
+# My API
+
+## Math Functions
+
+```ts
+1 + 1 // => 2
+```
+
+### Advanced
+
+```ts
+(10 + 5) * 2 // => 30
+```
+````
+
+To change what the top-level heading is used for the top level describe, use the `--describe`
+command line option. For example, to start with `H3s`, use:
+```sh
+$ lit-md --describe="###" myfile.ts
+```
+Describe blocks can be ignored completely using `--describe=hidden`:
+
+Only the `example`s will appear in the markdown.
+
+```ts
+// Input file "tmp.ts":
+
+// # My API
+import { describe, example } from 'node:test'
+import assert from 'node:assert/strict'
+describe('Math Functions', () => {
+  example('addition', () => {
+      assert.equal(1 + 1, 2)
+  })
   example('subtraction', () => {
-    assert.equal(5 - 2, 3)
+      assert.equal(5 - 2, 3)
   })
 })
 ```
@@ -124,52 +161,15 @@ $ lit-md --describe=hidden tmp.ts
 ```
 ````
 
-#### ## (H2) format
-
-The `##` format (default) renders describe() blocks as H2 headers.
-Nested describes become H3, H4, etc.
-
-```ts
-// Input file "tmp.ts":
-// # My API
-import { describe, example } from 'node:test'
-import assert from 'node:assert/strict'
-describe('Math Functions', () => {
-  example('addition', () => {
-    assert.equal(1 + 1, 2)
-  })
-  describe('Advanced', () => {
-    example('complex calc', () => {
-      assert.equal((10 + 5) * 2, 30)
-    })
-  })
-})
-```
-
-````sh
-$ lit-md --describe="##" tmp.ts
-# My API
-
-## Math Functions
-
-```ts
-1 + 1 // => 2
-```
-
-### Advanced
-
-```ts
-(10 + 5) * 2 // => 30
-```
-````
-
 #### auto format
 
-The `auto` format adapts header levels to document structure. It starts at h1 if no headers exist, or one level deeper than the last header.
+The `auto` format adapts header levels to document structure.
+It starts at h1 if no headers exist, or one level deeper than the last header.
 
 ```ts
 // Input file "tmp.ts":
-// # My API
+
+// ### My API
 // Some introduction text
 import { describe, example } from 'node:test'
 import assert from 'node:assert/strict'
@@ -182,10 +182,10 @@ describe('Math Functions', () => {
 
 ````sh
 $ lit-md --describe="auto" tmp.ts
-# My API
+### My API
 Some introduction text
 
-## Math Functions
+#### Math Functions
 
 ```ts
 1 + 1 // => 2
@@ -194,52 +194,26 @@ Some introduction text
 
 ### Snapshot Matching
 
-#### validate against snapshots
-
-Use --match-snapshot to validate generated markdown against snapshot files.
-Snapshots are auto-generated if missing.
-
-```sh
-$ lit-md --match-snapshot tmp.ts
-```
-
-#### watch and validate snapshots
-
-Combine --match-snapshot with --watch for continuous validation during development.
-
-```sh
-$ lit-md --match-snapshot --watch tmp.ts
-```
-
 ### Output Modes
-
-#### dry-run preview
-
+#### Dry-run preview
 Use --dryrun to preview what would be generated and written without actually writing files.
-
 ```sh
 $ lit-md --dryrun --outDir ./docs tmp.ts
-# Input file `tmp.ts` contains `// # Preview`
 ```
 
-#### write to directory
-
+#### Write to directory
 Use --outDir to write generated markdown files to a specific directory. Filenames are derived from input files.
-
-```ts
-// Input file "tmp.ts":
-// # Documentation
-import { example } from 'node:test'
-example('sample', () => {})
-```
-
 ```sh
 $ lit-md --outDir ./docs tmp.ts
 ```
 
 ### Common Combinations
 
-#### full validation pipeline
+#### Full validation pipeline
+Combine --test, --typecheck, and --watch for a complete development workflow with continuous validation.
+```sh
+$ lit-md --test --typecheck --watch tmp.ts
+```
 
 #### single file output with testing
 
