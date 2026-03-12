@@ -129,6 +129,10 @@ describe('Shell examples', () => {
 })
 
 /*
+## Development
+
+See DEVELOPMENT.md file.
+
 
 ## Similar tools
 - [Literate JS](https://github.com/danvk/literate-ts) -- types checks code blocks in markdown files

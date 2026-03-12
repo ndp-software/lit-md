@@ -54,15 +54,15 @@ import { describe, example } from '@ndp-software/lit-md'
 import assert from 'node:assert/strict'
 
 describe('My Project README.', () => {
-// This is a really great project! 
+// This is a really great project!
 // Adding numbers is as simple as using the "+" operator:
   example('add example', () => {
     import { add, multiply } from './maths.ts'
     const a = 1
     const b = 2
     assert.equal(add(a, b), 3)
-  })  
-  
+  })
+
   // Also supported is multiplication:
   example('multiply example', () => {
     const x = 3
@@ -119,6 +119,11 @@ hello world
 ```
 
 For more information on the `shellExample`, see [shellCommand documentation](./docs/shell-examples.md).
+## Development
+
+See DEVELOPMENT.md file.
+
+
 ## Similar tools
 - [Literate JS](https://github.com/danvk/literate-ts) -- types checks code blocks in markdown files
 - [TwoSlash](https://github.com/microsoft/TypeScript-Website/tree/v2/packages/ts-twoslasher)
