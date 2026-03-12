@@ -41,3 +41,10 @@ parts.length // => 3
 An `example()` with an empty body emits nothing.
 
 ### Code blocks within comments
+
+Code blocks inside comments are included in the output as-is, without needing an `example()`.
+They are not run as part of the tests.
+```typescript
+const x = 42
+console.log(x, x / 7, 'Hello', "world")
+```

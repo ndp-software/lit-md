@@ -24,3 +24,9 @@ typeof msg // => 'string'
 ```
 
 ### Markdown Formatting
+
+Comments support full Markdown: **bold**, `inline code`, and lists.
+
+- `parse()` — extracts structure
+- `render()` — emits markdown
+- `example()` — creates code blocks
