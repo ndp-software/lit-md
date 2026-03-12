@@ -46,7 +46,7 @@
     "build:all": "npm run clean && npm run readme && npm run build",
     "build:types": "tsc -p tsconfig.build.json",
     "build:js": "esbuild ./src/cli.ts --bundle --format=esm --platform=node --target=es2022 --sourcemap --external:typescript --outfile=./dist/cli.js",
-    "build:docs": "node ./src/cli.ts --test --typecheck --out ./docs/cli.md ./src/docs/cli.lit-md.ts && node ./src/cli.ts --test --typecheck --out ./docs/shell-examples.md ./src/docs/shell-examples.lit-md.ts",
+    "build:docs": "find src/docs -name '*.lit-md.ts' | grep -v README | xargs node src/cli.ts --outDir ./docs",
 
     "prepublishOnly": "npm run clean && npm run verify && npm run build",
     "clean": "rm -rf dist"
