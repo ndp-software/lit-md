@@ -165,8 +165,7 @@ export function _runShellExample(cmd: string, opts: ShellExampleOpts): void {
       try {
         content = readFileSync(resolvePath(fa.path), 'utf8')
       } catch (e) {
-        const err = e as NodeJS.ErrnoException
-        if (err.code === 'ENOENT') {
+        if (e instanceof Error && (e as NodeJS.ErrnoException).code === 'ENOENT') {
           throw new Error(`Output file not found: ${fa.path}\n\nThe command may not have created this file, or it may be in a different location.\nCommand: ${cmd}`)
         }
         throw e

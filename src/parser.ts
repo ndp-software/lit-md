@@ -864,7 +864,7 @@ function isExecutionNeeded(opts: ts.ObjectLiteralExpression): boolean {
   // Check if stdout.display is true
   const stdoutProp = getProp(opts, 'stdout')
   if (stdoutProp && ts.isObjectLiteralExpression(stdoutProp.initializer)) {
-    const displayProp = getProp(stdoutProp.initializer as ts.ObjectLiteralExpression, 'display')
+    const displayProp = getProp(stdoutProp.initializer, 'display')
     if (displayProp && displayProp.initializer.kind === ts.SyntaxKind.TrueKeyword) {
       return true
     }
@@ -989,8 +989,8 @@ function appendShellExampleAnnotations(
     }
 
     if (key === 'stdout' && ts.isObjectLiteralExpression(prop.initializer)) {
-      const containsProp = getProp(prop.initializer as ts.ObjectLiteralExpression, 'contains')
-      const displayProp = getProp(prop.initializer as ts.ObjectLiteralExpression, 'display')
+      const containsProp = getProp(prop.initializer, 'contains')
+      const displayProp = getProp(prop.initializer, 'display')
       
       // If display is true, use cached execution to show stdout
       if (displayProp && displayProp.initializer.kind === ts.SyntaxKind.TrueKeyword) {
