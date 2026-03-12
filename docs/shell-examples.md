@@ -143,7 +143,7 @@ shellExample('false', {
 
 shellExample('true', {
       exitCode: 0,
-      stdout: {display: true}
+      stdout: {display: false}
     })
 ```
 

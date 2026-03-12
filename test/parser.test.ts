@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parse } from '../src/parser.ts'
+import {adjustHSpacing, parse} from '../src/parser.ts'
 import { render } from '../src/renderer.ts'
 import { readFileSync } from 'fs'
 
@@ -984,6 +984,50 @@ describe('parse: shellExample meta with special characters in cmd', () => {
     const text = (tsNode as any).text as string
     // \r should be escaped as \\r in the output (not literal carriage return)
     assert.ok(!text.includes('\r'), `Should not contain literal carriage return in: ${JSON.stringify(text)}`)
+  })
+
+})
+
+
+describe('adjustHSpacing', () => {
+  test('left aligned strings are unaffected', () => {
+    const leftAligned = `foo\nbar\nbaz`
+    assert.equal(adjustHSpacing(leftAligned), leftAligned)
+  })
+
+  for (let tab of [' ', '  ', '   ', '    ', '\t'])
+    test(`leaves alone if [${tab === '\t' ? 'tab' : `${tab.length} space`}] on second line (normal indention)`, () => {
+      const normal = `a\n${tab}b\n${tab}c\n${tab}${tab}d\n${tab}\e`
+      assert.equal(adjustHSpacing(normal), normal)
+    })
+
+  test('first line no indent, 2nd big indent should assume left alignment', () => {
+    const text =
+      `# Title
+       This is a sample paragraph in a block`
+
+    assert.equal(adjustHSpacing(text), `# Title\nThis is a sample paragraph in a block`)
+  })
+
+  test('all big indents should assume left alignment', () => {
+    const text = `
+       # Title
+       This is a sample paragraph in a block`
+
+    assert.equal(adjustHSpacing(text), `# Title\nThis is a sample paragraph in a block`)
+  })
+
+  test('maintains nested indent blocks', () => {
+    const textWithLotsOfBigIndents =
+      `# A
+       B
+         C
+           Indented More`
+
+    assert.equal(adjustHSpacing(textWithLotsOfBigIndents), `# A
+B
+  C
+    Indented More`)
   })
 
 })

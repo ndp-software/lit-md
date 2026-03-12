@@ -129,7 +129,7 @@ describe('shellExample', () => {
 
     example('with exitCode mismatch detection', () => shellExample('true', {
       exitCode: 0,
-      stdout: {display: true}
+      stdout: {display: false}
     }))
     /*
     Input and Output Files

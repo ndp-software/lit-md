@@ -708,7 +708,7 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
       }
       
       // Create code block with label for C-style languages (only if summary and displayPath are true)
-      let blockText = content
+      let blockText = adjustHSpacing(content)
       if (supportsCStyleComments(lang) && displayPath && summary) {
         blockText = `// Input file "${filePath}":\n${content}`
       }
@@ -716,6 +716,20 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
       nodes.push({ kind: 'code', lang, text: blockText })
     }
   }
+}
+
+export function adjustHSpacing(s: string) {
+  const lines = s.split('\n')
+  if (lines[0] == '') lines.shift()
+  const indents = lines.map(line => line.replace(/[^\t ].*$/,'').length)
+  if (indents[0] == 0) indents.shift()
+  const minIndent = Math.min(...indents)
+  const stripIndents = minIndent > 4
+
+  return lines.map((line, i) => {
+    if (!stripIndents || (i === 0 && line[0] != ' ')) return line
+    return line.substring(minIndent)
+  }).join('\n')
 }
 
 const OUTPUT_FILE_INLINE_LIMIT = 60

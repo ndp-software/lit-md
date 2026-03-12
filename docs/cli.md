@@ -25,45 +25,13 @@ const c = a + b
 ```
 ````
 
-### Running Tests
-
+### Running (as) Tests
 Use --test to run tests before generating markdown.
-
-```ts
-// Input file "tmp.ts":
-
-import {test as example} from 'node:test'
-import assert from 'node:assert'
-// # Testing
-example('passing test', () => assert(true))
 ```
-
-````sh
 $ lit-md --test tmp.ts
-✔ passing test (2.716607ms)
-ℹ tests 1
-ℹ suites 0
-ℹ pass 1
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 272.023144
-# Testing
-```ts
-assert(true)
 ```
-ℹ tests 1
-ℹ suites 0
-ℹ pass 1
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 126.580156
-````
+Failing tests will prevent (flawed) markdown generation.
 
-Failed tests will prevent (flawed) markdown generation.
 ### Type Checking
 Use --typecheck to validate TypeScript before generating markdown.
 ```sh

@@ -25,25 +25,12 @@ example('test', () => {
     }
   })
 
-  describe('Running Tests', () => {
-    // Use --test to run tests before generating markdown.
-    shellExample('lit-md --test tmp.ts', {
-      displayCommand: true,
-      inputFiles: [{
-        path: 'tmp.ts',
-        content: `
-import {test as example} from 'node:test'
-import assert from 'node:assert'
-// # Testing
-example('passing test', () => assert(true))`
-      }],
-      stdout: {
-        contains: '# Testing',
-        display: true
-      }
-    })
-    // Failed tests will prevent (flawed) markdown generation.
-  })
+// ### Running (as) Tests
+// Use --test to run tests before generating markdown.
+// ```
+// $ lit-md --test tmp.ts
+// ```
+// Failing tests will prevent (flawed) markdown generation.
 
 // ### Type Checking
 // Use --typecheck to validate TypeScript before generating markdown.

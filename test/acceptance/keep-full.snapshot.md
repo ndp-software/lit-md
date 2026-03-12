@@ -9,7 +9,6 @@ For multi-line statements like functions and classes, use `// keep:full` to incl
 
 With input file `input.md`:
 ```markdown
-
   const CONFIG = {timeout: 5000} // keep
 
   example('use config', () => {
