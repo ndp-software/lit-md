@@ -1,6 +1,7 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import {adjustHSpacing, parse} from '../src/parser.ts'
+import type { CodeNode, ProseNode, DescribeNode, OutputFileDisplayNode } from '../src/parser.ts'
 import { render } from '../src/renderer.ts'
 import { readFileSync } from 'fs'
 
@@ -218,7 +219,7 @@ describe('My Group', () => {
     assert.ok(JSON.stringify(nodes).includes('My Group'))
     const describeNode = nodes.find(n => n.kind === 'describe')
     assert.ok(describeNode)
-    assert.equal((describeNode as any).name, 'My Group')
+    assert.equal((describeNode as DescribeNode).name, 'My Group')
   })
 
   test('prose comments between tests inside describe are captured', () => {
@@ -388,8 +389,8 @@ test('basic', () => {
 })
 `)
     // should produce: prose + one merged code block
-    const prose = nodes.find(n => n.kind === 'prose') as any
-    const code = nodes.find(n => n.kind === 'code') as any
+    const prose = nodes.find(n => n.kind === 'prose') as ProseNode
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(nodes.length, 2)
     assert.ok(prose.text.includes('Here is how to use it'))
     assert.ok(code.text.includes("import { encode } from './encoder.ts'"))
@@ -408,7 +409,7 @@ test('basic', () => {
     assert.equal(nodes[0]!.kind, 'prose')
     assert.equal(nodes[1]!.kind, 'code')
     // The code block should NOT contain the prose
-    assert.ok(!(nodes[1] as any).text.includes('Just some prose'))
+    assert.ok(!(nodes[1] as CodeNode).text.includes('Just some prose'))
   })
 
 })
@@ -423,7 +424,7 @@ test('basic', () => {
   const x = 1
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.title, 'my-example.ts')
   })
 
@@ -443,7 +444,7 @@ test('basic', () => {
     const nodes = parse(
       `// file: header.ts\nimport { foo } from './foo.ts' // keep`
     )
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.title, 'header.ts')
   })
 
@@ -460,31 +461,31 @@ describe('parse: full document model (fixture)', () => {
 
     // Should start with prose (the # Encoder heading)
     assert.equal(nodes[0]?.kind, 'prose')
-    assert.ok((nodes[0] as any).text.startsWith('# Encoder'))
+    assert.ok((nodes[0] as ProseNode).text.startsWith('# Encoder'))
 
     // Should have a kept import code block
-    const importNode = nodes.find(n => n.kind === 'code' && (n as any).text.includes('encoder.ts'))
+    const importNode = nodes.find(n => n.kind === 'code' && (n as CodeNode).text.includes('encoder.ts'))
     assert.ok(importNode, 'should have kept import code block')
 
     // Should have the merged code block with // keep import + test body
     const mergedNode = nodes.find(n =>
       n.kind === 'code' &&
-      (n as any).text.includes("import { encode }") &&
-      (n as any).text.includes("encode('hello')")
+      (n as CodeNode).text.includes("import { encode }") &&
+      (n as CodeNode).text.includes("encode('hello')")
     )
     assert.ok(mergedNode, 'should have merged code block')
-    assert.equal((mergedNode as any).title, 'encode-example.ts')
+    assert.equal((mergedNode as CodeNode).title, 'encode-example.ts')
 
     // Should have the round-trip test code
     const roundTripNode = nodes.find(n =>
-      n.kind === 'code' && (n as any).text.includes('decode(encode')
+      n.kind === 'code' && (n as CodeNode).text.includes('decode(encode')
     )
     assert.ok(roundTripNode, 'should have round-trip test code')
 
     // Should end with prose containing the illustrative code fence
     const lastNode = nodes[nodes.length - 1]
     assert.equal(lastNode?.kind, 'prose')
-    assert.ok((lastNode as any).text.includes('```ts'))
+    assert.ok((lastNode as ProseNode).text.includes('```ts'))
   })
 
 })
@@ -500,7 +501,7 @@ test('t', () => {
   assert.equal(result, 42)
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "const result = compute()\nresult // => 42")
   })
 
@@ -512,7 +513,7 @@ test('t', () => {
   assert.deepEqual(arr, [1, 2, 3])
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "arr // => [1, 2, 3]")
   })
 
@@ -526,7 +527,7 @@ test('t', () => {
   ])
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "nodes // => [\n      //   { kind: 'prose' }\n      // ]")
   })
 
@@ -538,7 +539,7 @@ test('t', () => {
   assert.notEqual(x, null)
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "x // != null")
   })
 
@@ -550,7 +551,7 @@ test('t', () => {
   assert.throws(() => riskyFn(), /expected error/)
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "riskyFn() // throws /expected error/")
   })
 
@@ -562,7 +563,7 @@ test('t', () => {
   assert.throws(() => riskyFn())
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "riskyFn() // throws")
   })
 
@@ -575,7 +576,7 @@ test('t', () => {
   assert.ok(result)
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.equal(code?.text, "const result = check()")
   })
 
@@ -590,7 +591,7 @@ test('t', () => {
     })
 })
 `)
-    const code = nodes.find(n => n.kind === 'code') as any
+    const code = nodes.find(n => n.kind === 'code') as CodeNode
     assert.ok(code?.text.includes('subElements // OK'))
     assert.ok(!code?.text.includes('assert.ok'))
   })
@@ -660,7 +661,7 @@ describe('parse: shellExample() → sh code block', () => {
     assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.deepEqual(nodes[1], { kind: 'prose', text: 'Output file `output.txt` contains This is a rather long expected string that exceeds sixty cha....', terminal: true })
     assert.equal(nodes[2]?.kind, 'output-file-display')
-    const displayNode = nodes[2] as any
+    const displayNode = nodes[2] as OutputFileDisplayNode
     assert.equal(displayNode.path, 'output.txt')
     assert.ok(displayNode.execution, 'should have execution for long string')
   })
@@ -693,7 +694,7 @@ describe('parse: shellExample() → sh code block', () => {
 
   test('shellExample with inputFiles captures them in display node', () => {
     const nodes = parse(`shellExample('cp a.txt b.txt', { inputFiles: [{ path: 'a.txt', content: 'hello' }], outputFiles: [{ path: 'b.txt', contains: 'hello' }] })`)
-    const displayNode = nodes.find(n => n.kind === 'output-file-display') as any
+    const displayNode = nodes.find(n => n.kind === 'output-file-display') as OutputFileDisplayNode
     assert.ok(displayNode, 'should have output-file-display node')
     assert.deepEqual(displayNode.inputFiles, [{ path: 'a.txt', content: 'hello' }])
     assert.equal(displayNode.cmd, 'cp a.txt b.txt')
@@ -821,7 +822,7 @@ describe('parse: shellExample() → sh code block', () => {
     assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.deepEqual(nodes[1], { kind: 'prose', text: 'Contains This is a very long string that definitely exceeds the sixty....', terminal: true })
     assert.equal(nodes[2]?.kind, 'output-file-display')
-    const displayNode = nodes[2] as any
+    const displayNode = nodes[2] as OutputFileDisplayNode
     assert.ok(displayNode.execution, 'should have execution for long string')
   })
 
@@ -872,7 +873,7 @@ describe('parse: shellExample() → sh code block', () => {
     assert.equal(nodes.length, 2)
     assert.deepEqual(nodes[0], { kind: 'code', lang: 'sh', text: '$ sort input.txt\n# exits: 2'})
     assert.equal(nodes[1]?.kind, 'output-file-display')
-    const displayNode = nodes[1] as any
+    const displayNode = nodes[1] as OutputFileDisplayNode
     assert.ok(displayNode.execution, 'should have execution when no contains/matches')
   })
 
@@ -906,7 +907,7 @@ describe("My Project's README.", () => {
 })
 `)
     const descNode = nodes.find(n => n.kind === 'describe')
-    assert.equal((descNode as any)?.name, "My Project's README.")
+    assert.equal((descNode as DescribeNode | undefined)?.name, "My Project's README.")
   })
 
   test('describe with apostrophe in escaped single-quoted name is correctly parsed', () => {
@@ -917,7 +918,7 @@ describe('My Project\\'s README.', () => {
 })
 `)
     const descNode = nodes.find(n => n.kind === 'describe')
-    assert.equal((descNode as any)?.name, "My Project's README.")
+    assert.equal((descNode as DescribeNode | undefined)?.name, "My Project's README.")
   })
 
   test('describe name with quotes renders correctly as markdown header', () => {
@@ -947,7 +948,7 @@ describe('parse: shellExample meta with special characters in cmd', () => {
     const nodes = parse(`shellExample("ls '/some path'", { meta: true })`)
     const tsNode = nodes.find(n => n.kind === 'code' && n.lang === 'ts')
     assert.ok(tsNode, 'should generate ts code node')
-    const text = (tsNode as any).text as string
+    const text = (tsNode as CodeNode).text
     // Should have escaped single quotes
     assert.ok(text.includes("\\'"), `Should have escaped apostrophe in: ${text}`)
     // The text should represent the original cmd correctly
@@ -960,7 +961,7 @@ describe('parse: shellExample meta with special characters in cmd', () => {
     const nodes = parse(`shellExample('echo \\\\n', { meta: true })`)
     const tsNode = nodes.find(n => n.kind === 'code' && n.lang === 'ts')
     assert.ok(tsNode, 'should generate ts code node')
-    const text = (tsNode as any).text as string
+    const text = (tsNode as CodeNode).text
     // The text string value should have two backslashes before n (\\n in text = \n when evaluated)
     assert.ok(text.includes('\\\\n'), `Should have escaped backslash in: ${text}`)
   })
@@ -969,7 +970,7 @@ describe('parse: shellExample meta with special characters in cmd', () => {
     const nodes = parse(`shellExample("echo My Project's README", { meta: true })`)
     const tsNode = nodes.find(n => n.kind === 'code' && n.lang === 'ts')
     assert.ok(tsNode, 'should generate ts code node')
-    const text = (tsNode as any).text as string
+    const text = (tsNode as CodeNode).text
     // The reconstructed call must have escaped the apostrophe
     assert.ok(text.includes("\\'"), `Should have escaped apostrophe in: ${text}`)
     // The text should contain the original content
@@ -981,7 +982,7 @@ describe('parse: shellExample meta with special characters in cmd', () => {
     const nodes = parse(`shellExample("echo test\\r", { meta: true })`)
     const tsNode = nodes.find(n => n.kind === 'code' && n.lang === 'ts')
     assert.ok(tsNode, 'should generate ts code node')
-    const text = (tsNode as any).text as string
+    const text = (tsNode as CodeNode).text
     // \r should be escaped as \\r in the output (not literal carriage return)
     assert.ok(!text.includes('\r'), `Should not contain literal carriage return in: ${JSON.stringify(text)}`)
   })
