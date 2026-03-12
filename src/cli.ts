@@ -138,13 +138,12 @@ Options:
   --outDir <dir>           Write generated markdown files to this directory
   --describe <format>       Control describe() block rendering (default: ##)
                             Formats:
+                              auto    - Dynamically determine level based on document structure
+                                        (h1 if no headers exist, else one level deeper than last header)
                               hidden  - Omit describes
                               #       - Render as h1 headers, nested as h2, h3, etc.
                               ##      - Render as h2 headers, nested as h3, h4, etc. (default)
-                              ###     - Render as h3 headers, nested as h4, h5, etc.
-                              ####    - Render as h4 headers, nested as h5, h6, etc.
-                              auto    - Dynamically determine level based on document structure
-                                        (h1 if no headers exist, else one level deeper than last header)
+                              etc.
 
 By default, output is written to stdout. Use --out or --outDir to write to files.
 
