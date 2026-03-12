@@ -257,6 +257,36 @@ describe('outer', () => {
     ])
   })
 
+  test('describe with only comments (no tests) emits prose', () => {
+    const nodes = parse(`
+import { describe } from 'node:test'
+describe('My Section', () => {
+  // This is documentation for the section.
+  // It has multiple lines.
+})
+`)
+    assert.deepEqual(nodes, [
+      { kind: 'describe', name: 'My Section', depth: 0 },
+      { kind: 'prose', text: 'This is documentation for the section.\nIt has multiple lines.' }
+    ])
+  })
+
+  test('nested describe with only comments emits prose at correct depth', () => {
+    const nodes = parse(`
+import { describe } from 'node:test'
+describe('outer', () => {
+  describe('inner', () => {
+    // Inner section docs.
+  })
+})
+`)
+    assert.deepEqual(nodes, [
+      { kind: 'describe', name: 'outer', depth: 0 },
+      { kind: 'describe', name: 'inner', depth: 1 },
+      { kind: 'prose', text: 'Inner section docs.' }
+    ])
+  })
+
 })
 
 

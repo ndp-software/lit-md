@@ -78,10 +78,12 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
       processStatement(stmt, depth)
     }
     
-    // Extract trailing comments after the last statement
-    if (statements.length > 0 && parentBlock) {
-      const lastStatement = statements[statements.length - 1]!
-      extractLeadingComments(lastStatement.end)
+    // Extract trailing/inner comments: after last statement, or inside block if empty
+    if (parentBlock) {
+      const pos = statements.length > 0
+        ? statements[statements.length - 1]!.end
+        : statements.pos  // position just after { — finds comments in empty blocks
+      extractLeadingComments(pos)
     }
   }
 
