@@ -116,7 +116,7 @@ if (watch && !process.stdin.isTTY) {
 
 
 
-function helpText() {
+function helpText(): string {
   return `lit-md - Generate markdown documentation from test files
 
 Usage: lit-md [options] <file.ts|js> [file2 ...]
@@ -374,8 +374,8 @@ async function generateMarkdown(): Promise<void> {
       const origInfo = console.info
       const origWarn = console.warn
       try {
-        process.stdout.write = () => true as any
-        process.stderr.write = () => true as any
+        process.stdout.write = (() => true) as unknown as typeof process.stdout.write
+        process.stderr.write = (() => true) as unknown as typeof process.stderr.write
         console.log = () => {
         }
         console.info = () => {

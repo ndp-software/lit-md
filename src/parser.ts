@@ -140,18 +140,18 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
               }
               
               if (proseNodeIdx >= 0) {
-                const proseNode = nodes[proseNodeIdx]!
-                const fenceMatch = extractTrailingFence((proseNode as any).text)
+                const proseNode = nodes[proseNodeIdx]! as ProseNode
+                const fenceMatch = extractTrailingFence(proseNode.text)
                 if (fenceMatch) {
-                  (proseNode as any).text = fenceMatch.prose;
-                  (proseNode as any).noBlankAfter = true
+                  proseNode.text = fenceMatch.prose;
+                  proseNode.noBlankAfter = true
                   // Remove any describe nodes between the prose and here
                   nodes.splice(proseNodeIdx + 1)
                   const mergedCode = fenceMatch.fenceCode + '\n' + code
                   nodes.push(codeNode(lang, mergedCode, title))
                 } else if (proseNodeIdx === nodes.length - 1) {
                   // Prose directly precedes this code block (no describe nodes in between), suppress blank line
-                  (proseNode as any).noBlankAfter = true
+                  proseNode.noBlankAfter = true
                   nodes.push(codeNode(lang, code, title))
                 } else {
                   // There are describe nodes between prose and code, don't suppress blank line
@@ -718,7 +718,7 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
   }
 }
 
-export function adjustHSpacing(s: string) {
+export function adjustHSpacing(s: string): string {
   const lines = s
     .split('\n')
     .map(line => line.trimEnd())
