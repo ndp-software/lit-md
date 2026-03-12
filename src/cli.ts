@@ -357,6 +357,34 @@ function getOutputFileName(inputPath: string): string {
 
 // --- Generate markdown ---
 
+/**
+ * Executes an async function with console and process output suppressed.
+ * Saves and restores all output methods to ensure cleanup even on errors.
+ */
+async function suppressConsoleOutput(fn: () => Promise<void>): Promise<void> {
+  const origStdoutWrite = process.stdout.write
+  const origStderrWrite = process.stderr.write
+  const origLog = console.log
+  const origInfo = console.info
+  const origWarn = console.warn
+
+  try {
+    process.stdout.write = (() => true) as unknown as typeof process.stdout.write
+    process.stderr.write = (() => true) as unknown as typeof process.stderr.write
+    console.log = () => {}
+    console.info = () => {}
+    console.warn = () => {}
+
+    await fn()
+  } finally {
+    process.stdout.write = origStdoutWrite
+    process.stderr.write = origStderrWrite
+    console.log = origLog
+    console.info = origInfo
+    console.warn = origWarn
+  }
+}
+
 async function generateMarkdown(): Promise<void> {
   let filesGenerated = 0
 
@@ -368,30 +396,11 @@ async function generateMarkdown(): Promise<void> {
     const absolutePath = resolve(inputPath)
     try {
       // Suppress test output during import and test execution
-      const origStdoutWrite = process.stdout.write
-      const origStderrWrite = process.stderr.write
-      const origLog = console.log
-      const origInfo = console.info
-      const origWarn = console.warn
-      try {
-        process.stdout.write = (() => true) as unknown as typeof process.stdout.write
-        process.stderr.write = (() => true) as unknown as typeof process.stderr.write
-        console.log = () => {
-        }
-        console.info = () => {
-        }
-        console.warn = () => {
-        }
+      await suppressConsoleOutput(async () => {
         await import(absolutePath)
         // Wait for deferred test execution to complete while output is suppressed
         await new Promise(resolve => setTimeout(resolve, 100))
-      } finally {
-        process.stdout.write = origStdoutWrite
-        process.stderr.write = origStderrWrite
-        console.log = origLog
-        console.info = origInfo
-        console.warn = origWarn
-      }
+      })
     } catch {
       // File might not be valid JavaScript/TypeScript module, continue
     }
