@@ -1030,4 +1030,19 @@ B
     Indented More`)
   })
 
+  test('ignores blank lines', () => {
+    const textWithLotsOfBigIndents =
+      `# A
+
+       B
+         C
+           Indented More`
+
+    assert.equal(adjustHSpacing(textWithLotsOfBigIndents), `# A
+
+B
+  C
+    Indented More`)
+  })
+
 })

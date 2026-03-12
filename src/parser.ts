@@ -721,7 +721,7 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
 export function adjustHSpacing(s: string) {
   const lines = s.split('\n')
   if (lines[0] == '') lines.shift()
-  const indents = lines.map(line => line.replace(/[^\t ].*$/,'').length)
+  const indents = lines.filter(line => line.match(/\S/)).map(line => line.replace(/[^\t ].*$/,'').length)
   if (indents[0] == 0) indents.shift()
   const minIndent = Math.min(...indents)
   const stripIndents = minIndent > 4
