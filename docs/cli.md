@@ -5,9 +5,9 @@ By default, output is written to stdout.
 ```ts
 // Input file "tmp.ts":
 import { example } from 'node:test'
-      
+
 // # My Documentation
-      
+
 example('test', () => {
   const a = 0.5
   const b = 0.25
@@ -58,7 +58,6 @@ become H3s, etc.
 
 ```ts
 // Input file "tmp.ts":
-
 // # My API
 import { describe, example } from 'node:test'
 import assert from 'node:assert/strict'
@@ -102,7 +101,6 @@ Only the `example`s will appear in the markdown.
 
 ```ts
 // Input file "tmp.ts":
-
 // # My API
 import { describe, example } from 'node:test'
 import assert from 'node:assert/strict'
@@ -136,7 +134,6 @@ It starts at h1 if no headers exist, or one level deeper than the last header.
 
 ```ts
 // Input file "tmp.ts":
-
 // ### My API
 // Some introduction text
 import { describe, example } from 'node:test'
@@ -190,7 +187,7 @@ Combine --test with --out to run tests and write to a specific markdown file.
 ```ts
 // Input file "tmp.ts":
 // # My Docs
-// 
+//
 // This documentation was generated with --test validation.
 
 ```

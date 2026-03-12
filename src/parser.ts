@@ -710,7 +710,7 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
       // Create code block with label for C-style languages (only if summary and displayPath are true)
       let blockText = adjustHSpacing(content)
       if (supportsCStyleComments(lang) && displayPath && summary) {
-        blockText = `// Input file "${filePath}":\n${content}`
+        blockText = `// Input file "${filePath}":\n${blockText}`
       }
       
       nodes.push({ kind: 'code', lang, text: blockText })
@@ -719,12 +719,20 @@ function processShellExampleInputFiles(opts: ts.ObjectLiteralExpression, nodes: 
 }
 
 export function adjustHSpacing(s: string) {
-  const lines = s.split('\n')
-  if (lines[0] == '') lines.shift()
-  const indents = lines.filter(line => line.match(/\S/)).map(line => line.replace(/[^\t ].*$/,'').length)
-  if (indents[0] == 0) indents.shift()
+  const lines = s
+    .split('\n')
+    .map(line => line.trimEnd())
+    .map(line => line.match(/^\s*$/) ? '' : line)
+
+  if (lines[0] === '') lines.shift() // Don't start with a blank line
+
+  const indents = lines
+    .filter(line => !!line) // Only consider non-blank lines for indentation
+    .map(line => line.replace(/[^\t ].*$/,'').length)
+  if (indents[0] == 0) indents.shift() // First lines might start at quote level, so ignore zero indent
   const minIndent = Math.min(...indents)
-  const stripIndents = minIndent > 4
+
+  const stripIndents = minIndent > 4 && minIndent !== Infinity
 
   return lines.map((line, i) => {
     if (!stripIndents || (i === 0 && line[0] != ' ')) return line

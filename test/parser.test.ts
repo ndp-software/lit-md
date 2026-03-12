@@ -1045,4 +1045,26 @@ B
     Indented More`)
   })
 
+  test('cli sample', () => {
+    const cliSample = `import { example } from 'node:test'
+                      
+                // # My Documentation
+                      
+                example('test', () => {
+                  const a = 0.5
+                  const b = 0.25
+                  const c = a + b
+                })`
+    assert.equal(adjustHSpacing(cliSample),
+`import { example } from 'node:test'
+
+// # My Documentation
+
+example('test', () => {
+  const a = 0.5
+  const b = 0.25
+  const c = a + b
+})`)
+  })
+
 })

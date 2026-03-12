@@ -10,14 +10,14 @@ describe('CLI', () => {
     inputFiles: [{
       path: 'tmp.ts',
       content: `import { example } from 'node:test'
-      
-// # My Documentation
-      
-example('test', () => {
-  const a = 0.5
-  const b = 0.25
-  const c = a + b
-})`
+                      
+                // # My Documentation
+                      
+                example('test', () => {
+                  const a = 0.5
+                  const b = 0.25
+                  const c = a + b
+                })`
     }],
     stdout: {
       contains: '# My Documentation',
@@ -59,19 +59,19 @@ example('test', () => {
       inputFiles: [{
         path: 'tmp.ts',
         content: `
-// # My API
-import { describe, example } from 'node:test'
-import assert from 'node:assert/strict'
-describe('Math Functions', () => {
-  example('addition', () => {
-    assert.equal(1 + 1, 2)
-  })
-  describe('Advanced', () => {
-    example('complex calc', () => {
-      assert.equal((10 + 5) * 2, 30)
-    })
-  })
-})`
+          // # My API
+          import { describe, example } from 'node:test'
+          import assert from 'node:assert/strict'
+          describe('Math Functions', () => {
+            example('addition', () => {
+              assert.equal(1 + 1, 2)
+            })
+            describe('Advanced', () => {
+              example('complex calc', () => {
+                assert.equal((10 + 5) * 2, 30)
+              })
+            })
+          })`
       }],
       stdout: {
         contains: '### Advanced',
@@ -92,17 +92,17 @@ describe('Math Functions', () => {
       inputFiles: [{
         path: 'tmp.ts',
         content: `
-// # My API
-import { describe, example } from 'node:test'
-import assert from 'node:assert/strict'
-describe('Math Functions', () => {
-  example('addition', () => {
-      assert.equal(1 + 1, 2)
-  })
-  example('subtraction', () => {
-      assert.equal(5 - 2, 3)
-  })
-})`
+          // # My API
+          import { describe, example } from 'node:test'
+          import assert from 'node:assert/strict'
+          describe('Math Functions', () => {
+            example('addition', () => {
+                assert.equal(1 + 1, 2)
+            })
+            example('subtraction', () => {
+                assert.equal(5 - 2, 3)
+            })
+          })`
       }],
       stdout: {
         contains: '# My API',
@@ -119,14 +119,15 @@ describe('Math Functions', () => {
         inputFiles: [{
           path: 'tmp.ts',
           content: `
-// ### My API
-// Some introduction text\nimport { describe, example } from 'node:test'
-import assert from 'node:assert/strict'
-describe('Math Functions', () => {
-  example('addition', () => {
-    assert.equal(1 + 1, 2)
-  })
-})`
+            // ### My API
+            // Some introduction text
+            import { describe, example } from 'node:test'
+            import assert from 'node:assert/strict'
+            describe('Math Functions', () => {
+              example('addition', () => {
+                assert.equal(1 + 1, 2)
+              })
+            })`
         }],
         stdout: {
           contains: '#### Math Functions',
