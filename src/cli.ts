@@ -99,6 +99,11 @@ if (watch && !process.stdin.isTTY) {
   process.exit(1)
 }
 
+if (watch && (dryrun || outFile || outputDir)) {
+  console.error('error: --watch is incompatible with --dryrun, --out, and --outDir')
+  process.exit(1)
+}
+
 
 ;(async () => {
   await executeTasks()
@@ -455,23 +460,50 @@ async function generateMarkdown(): Promise<void> {
   }
 }
 
+/**
+ * Runs a task and handles failure based on watch mode.
+ * In normal mode: exit on failure
+ * In watch mode: report error but continue (allow watch loop to proceed)
+ */
+interface TaskResult {
+  ok: boolean
+  message?: string
+  exitCode?: number
+}
+
+async function runTaskWithErrorHandling(
+  enabled: boolean,
+  taskFn: () => Promise<TaskResult>
+): Promise<void> {
+  if (!enabled) return
+
+  const result = await taskFn()
+  if (!result.ok) {
+    if (result.message) console.error(result.message)
+    if (!watch) process.exit(result.exitCode ?? 1)
+    // In watch mode, continue to next task
+  }
+}
+
 async function executeTasks(): Promise<void> {
   // Run typecheck before generation (if enabled)
-  if (runTypecheck) {
+  await runTaskWithErrorHandling(runTypecheck, async () => {
     const result = typecheck(inputPaths.map(p => resolve(p)))
     if (!result.ok) {
       for (const msg of result.messages) console.error(msg)
-      console.error('❌ Typecheck failed')
-      // In watch mode, report error but continue; in normal mode, exit
-      if (!watch) process.exit(1)
-      // Continue to markdown generation even if typecheck failed
+      return {
+        ok: false,
+        message: '❌ Typecheck failed',
+        exitCode: 1
+      }
     } else {
       console.error('✅ Typecheck passed')
+      return {ok: true}
     }
-  }
+  })
 
   // Run tests before generation (if enabled)
-  if (runTests) {
+  await runTaskWithErrorHandling(runTests, async () => {
     // Build a map of commands to their source file locations
     const commandMap = buildCommandLineMap(inputPaths)
 
@@ -493,13 +525,12 @@ async function executeTasks(): Promise<void> {
 
     // Combine stdout and stderr for analysis
     const fullOutput = ((result.stdout || '') + '\n' + (result.stderr || ''))
+    const stats = parseTestSummary(fullOutput)
 
     // Handle output based on mode
-    let stats = parseTestSummary(fullOutput)
     if (watch && result.stdout) {
       // In watch mode: show condensed summary instead of full output
-      let output = result.stdout.toString()
-      stats = parseTestSummary(output)
+      const output = result.stdout.toString()
 
       if (stats.hasFailed) {
         // Extract and show failures section with cleaned output and line numbers
@@ -519,43 +550,42 @@ async function executeTasks(): Promise<void> {
 
     if (result.status !== 0 || stats.hasFailed) {
       const exitCode = result.status !== 0 ? result.status : 1
-      // In watch mode, report error but continue; in normal mode, exit
-      if (!watch) process.exit(exitCode ?? 1)
-      // Continue to markdown generation even if tests failed
+      return {
+        ok: false,
+        exitCode: exitCode ?? 1
+      }
     }
-  }
+
+    return {ok: true}
+  })
 
   // Generate markdown (always do this, even if tests/typecheck failed)
   await generateMarkdown()
 
   // Run snapshot matching after generation (if enabled)
-  if (matchSnapshot) {
+  await runTaskWithErrorHandling(matchSnapshot, async () => {
     const snapshotDir = outputDir || inputPaths.map(p => dirname(resolve(p)))[0] || process.cwd()
     const result = await matchSnapshots(inputPaths.map(p => resolve(p)), snapshotDir, describeFormat)
 
     if (result.failed > 0) {
       // Show errors
+      let errorMsg = ''
       for (const error of result.errors) {
         if (error.message.includes('\n')) {
           // It's a diff
-          console.error(`\n✖ ${error.file}:\n${error.message}`)
+          errorMsg += `\n✖ ${error.file}:\n${error.message}`
         } else {
           // It's an error message
-          console.error(`✖ ${error.file}: ${error.message}`)
+          errorMsg += `\n✖ ${error.file}: ${error.message}`
         }
       }
-      console.error(`\n❌ Snapshot validation failed: ${result.failed}/${result.total} failed`)
-      // In watch mode, report error but continue; in normal mode, exit
-      if (!watch) process.exit(1)
-      // Continue watch loop even if snapshots failed
+      errorMsg += `\n\n❌ Snapshot validation failed: ${result.failed}/${result.total} failed`
+      return {ok: false, message: errorMsg, exitCode: 1}
     } else {
-      if (watch) {
-        console.error(`✅ Snapshots matched: ${result.passed} passed`)
-      } else {
-        console.error(`✅ Snapshots matched: ${result.passed} passed`)
-      }
+      console.error(`✅ Snapshots matched: ${result.passed} passed`)
+      return {ok: true}
     }
-  }
+  })
 }
 
 
