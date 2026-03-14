@@ -453,11 +453,8 @@ interface TaskResult {
 }
 
 async function runTaskWithErrorHandling(
-  enabled: boolean,
   taskFn: () => Promise<TaskResult>
 ): Promise<void> {
-  if (!enabled) return
-
   const result = await taskFn()
   if (!result.ok) {
     if (result.message) console.error(result.message)
@@ -469,105 +466,111 @@ async function runTaskWithErrorHandling(
 async function executeTasks(): Promise<void> {
 
   // Run typecheck before generation (if enabled)
-  await runTaskWithErrorHandling(runTypecheck, async () => {
-    const result = typecheck(inputPaths.map(p => resolve(p)))
-    if (!result.ok) {
-      for (const msg of result.messages) console.error(msg)
-      return {
-        ok: false,
-        message: '❌ Typecheck failed',
-        exitCode: 1
+  if (runTypecheck) {
+    await runTaskWithErrorHandling(async () => {
+      const result = typecheck(inputPaths.map(p => resolve(p)))
+      if (!result.ok) {
+        for (const msg of result.messages) console.error(msg)
+        return {
+          ok: false,
+          message: '❌ Typecheck failed',
+          exitCode: 1
+        }
+      } else {
+        console.error('✅ Typecheck passed')
+        return {ok: true}
       }
-    } else {
-      console.error('✅ Typecheck passed')
-      return {ok: true}
-    }
-  })
+    })
+  }
 
   // Run tests before generation (if enabled)
-  await runTaskWithErrorHandling(runTests, async () => {
-    // Build a map of commands to their source file locations
-    const commandMap = buildCommandLineMap(inputPaths)
+  if (runTests) {
+    await runTaskWithErrorHandling(async () => {
+      // Build a map of commands to their source file locations
+      const commandMap = buildCommandLineMap(inputPaths)
 
-    const stripFlag = stripTypesFlag()
-    const nodeArgs = ['--test', ...(stripFlag ? [stripFlag] : []), ...inputPaths.map(p => resolve(p))]
+      const stripFlag = stripTypesFlag()
+      const nodeArgs = ['--test', ...(stripFlag ? [stripFlag] : []), ...inputPaths.map(p => resolve(p))]
 
-    // Always capture output to check for async errors, but show it in normal mode
-    const result = spawnSync(process.execPath, nodeArgs, {encoding: 'utf-8' as const})
+      // Always capture output to check for async errors, but show it in normal mode
+      const result = spawnSync(process.execPath, nodeArgs, {encoding: 'utf-8' as const})
 
-    // Show output in normal (non-watch) mode with cleaned stack traces and line numbers
-    if (!watch) {
-      if (result.stdout) {
-        let output = cleanTestFailureOutput(result.stdout)
-        output = enhanceTestOutputWithLineNumbers(output, commandMap)
-        process.stdout.write(output ? output + '\n' : result.stdout)
-      }
-      if (result.stderr) process.stderr.write(result.stderr)
-    }
-
-    // Combine stdout and stderr for analysis
-    const fullOutput = ((result.stdout || '') + '\n' + (result.stderr || ''))
-    const stats = parseTestSummary(fullOutput)
-
-    // Handle output based on mode
-    if (watch && result.stdout) {
-      // In watch mode: show condensed summary instead of full output
-      const output = result.stdout.toString()
-
-      if (stats.hasFailed) {
-        // Extract and show failures section with cleaned output and line numbers
-        const failureStart = output.indexOf('✖ failing tests')
-        if (failureStart !== -1) {
-          let failureSection = output.substring(failureStart)
-          failureSection = cleanTestFailureOutput(failureSection)
-          failureSection = enhanceTestOutputWithLineNumbers(failureSection, commandMap)
-          console.error(failureSection)
+      // Show output in normal (non-watch) mode with cleaned stack traces and line numbers
+      if (!watch) {
+        if (result.stdout) {
+          let output = cleanTestFailureOutput(result.stdout)
+          output = enhanceTestOutputWithLineNumbers(output, commandMap)
+          process.stdout.write(output ? output + '\n' : result.stdout)
         }
-        console.error(`\n❌ Tests failed: ${stats.failed}/${stats.total} failed`)
-      } else {
-        // All passed: show one-line summary
-        console.log(`✅ Tests passed: ${stats.passed} passed`)
+        if (result.stderr) process.stderr.write(result.stderr)
       }
-    }
 
-    if (result.status !== 0 || stats.hasFailed) {
-      const exitCode = result.status !== 0 ? result.status : 1
-      return {
-        ok: false,
-        exitCode: exitCode ?? 1
+      // Combine stdout and stderr for analysis
+      const fullOutput = ((result.stdout || '') + '\n' + (result.stderr || ''))
+      const stats = parseTestSummary(fullOutput)
+
+      // Handle output based on mode
+      if (watch && result.stdout) {
+        // In watch mode: show condensed summary instead of full output
+        const output = result.stdout.toString()
+
+        if (stats.hasFailed) {
+          // Extract and show failures section with cleaned output and line numbers
+          const failureStart = output.indexOf('✖ failing tests')
+          if (failureStart !== -1) {
+            let failureSection = output.substring(failureStart)
+            failureSection = cleanTestFailureOutput(failureSection)
+            failureSection = enhanceTestOutputWithLineNumbers(failureSection, commandMap)
+            console.error(failureSection)
+          }
+          console.error(`\n❌ Tests failed: ${stats.failed}/${stats.total} failed`)
+        } else {
+          // All passed: show one-line summary
+          console.log(`✅ Tests passed: ${stats.passed} passed`)
+        }
       }
-    }
 
-    return {ok: true}
-  })
+      if (result.status !== 0 || stats.hasFailed) {
+        const exitCode = result.status !== 0 ? result.status : 1
+        return {
+          ok: false,
+          exitCode: exitCode ?? 1
+        }
+      }
+
+      return {ok: true}
+    })
+  }
 
   // Generate markdown (always do this, even if tests/typecheck failed)
   await generateMarkdown()
 
   // Run snapshot matching after generation (if enabled)
-  await runTaskWithErrorHandling(matchSnapshot, async () => {
-    const snapshotDir = outputDir || inputPaths.map(p => dirname(resolve(p)))[0] || process.cwd()
-    const result = await matchSnapshots(inputPaths.map(p => resolve(p)), snapshotDir, describeFormat)
+  if (matchSnapshot) {
+    await runTaskWithErrorHandling(async () => {
+      const snapshotDir = outputDir || inputPaths.map(p => dirname(resolve(p)))[0] || process.cwd()
+      const result = await matchSnapshots(inputPaths.map(p => resolve(p)), snapshotDir, describeFormat)
 
-    if (result.failed > 0) {
-      // Show errors
-      let errorMsg = ''
-      for (const error of result.errors) {
-        if (error.message.includes('\n')) {
-          // It's a diff
-          errorMsg += `\n✖ ${error.file}:\n${error.message}`
-        } else {
-          // It's an error message
-          errorMsg += `\n✖ ${error.file}: ${error.message}`
+      if (result.failed > 0) {
+        // Show errors
+        let errorMsg = ''
+        for (const error of result.errors) {
+          if (error.message.includes('\n')) {
+            // It's a diff
+            errorMsg += `\n✖ ${error.file}:\n${error.message}`
+          } else {
+            // It's an error message
+            errorMsg += `\n✖ ${error.file}: ${error.message}`
+          }
         }
+        errorMsg += `\n\n❌ Snapshot validation failed: ${result.failed}/${result.total} failed`
+        return {ok: false, message: errorMsg, exitCode: 1}
+      } else {
+        console.error(`✅ Snapshots matched: ${result.passed} passed`)
+        return {ok: true}
       }
-      errorMsg += `\n\n❌ Snapshot validation failed: ${result.failed}/${result.total} failed`
-      return {ok: false, message: errorMsg, exitCode: 1}
-    } else {
-      console.error(`✅ Snapshots matched: ${result.passed} passed`)
-      return {ok: true}
-    }
-  })
+    })
+  }
 }
 
 
