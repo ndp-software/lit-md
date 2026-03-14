@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-import {readFileSync, writeFileSync, mkdirSync} from 'node:fs'
-import {join, dirname, basename, extname, resolve} from 'node:path'
+import {mkdirSync, readFileSync, writeFileSync} from 'node:fs'
+import {basename, dirname, extname, join, resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {parse} from './parser.ts'
 import {render} from './renderer.ts'
 import {typecheck} from './typecheck.ts'
 import {stripTypesFlag, watchFilesAndWait} from './shell.ts'
 import {resolveOutputFiles} from './resolver.ts'
-import {resolveDescribeFormat, resetDescribeFormat} from './describe-format.ts'
+import {resetDescribeFormat, resolveDescribeFormat} from './describe-format.ts'
 import {matchSnapshots} from './acceptance.ts'
+import {extractArgValue, extractFlagArg} from './args.ts'
 
 // Handle unhandled promise rejections and exceptions
 let hasUnhandledError = false
@@ -29,16 +30,16 @@ process.on('uncaughtException', (error) => {
 
 const args = process.argv.slice(2)
 
-const showHelp = extractFlagArg('--help') || extractFlagArg('-h')
-const dryrun = extractFlagArg('--dryrun')
-const runTests = extractFlagArg('--test')
-const runTypecheck = extractFlagArg('--typecheck')
-const updateSnapshots = extractFlagArg('--update-snapshots') || extractFlagArg('-u')
-const matchSnapshot = extractFlagArg('--match-snapshot')
-const watch = extractFlagArg('--watch')
-const outFile = extractArgValue('--out')
-const outputDir = extractArgValue('--outDir')
-const describeFormat = extractArgValue('--describe') || '##'
+const showHelp = extractFlagArg(args, '--help') || extractFlagArg(args, '-h')
+const dryrun = extractFlagArg(args, '--dryrun')
+const runTests = extractFlagArg(args, '--test')
+const runTypecheck = extractFlagArg(args, '--typecheck')
+const updateSnapshots = extractFlagArg(args, '--update-snapshots') || extractFlagArg(args, '-u')
+const matchSnapshot = extractFlagArg(args, '--match-snapshot')
+const watch = extractFlagArg(args, '--watch')
+const outFile = extractArgValue(args, '--out')
+const outputDir = extractArgValue(args, '--outDir')
+const describeFormat = extractArgValue(args, '--describe') || '##'
 
 
 // Check for unknown options
@@ -165,30 +166,18 @@ Examples:
 `
 }
 
-function extractFlagArg(flag: string): boolean {
-  const idx = args.indexOf(flag)
-  if (idx === -1) return false
-  args.splice(idx, 1)
-  return true
-}
 
-function extractArgValue(name: string): string | undefined {
-  const idx = args.indexOf(name)
-  if (idx === -1) {
-    // Check for --flag=value format
-    const eqIdx = args.findIndex(arg => arg.startsWith(name + '='))
-    if (eqIdx === -1) return undefined
-    const value = args[eqIdx]!.slice(name.length + 1)
-    args.splice(eqIdx, 1)
-    return value
-  }
-  const value = args[idx + 1]
-  args.splice(idx, 2)
-  return value
-}
-
-
-// Helper to parse test summary from output
+/**
+ * Parses test runner output and extracts summary statistics.
+ *
+ * Scans the output for passed, failed, and total test counts, and also flags
+ * failures caused by asynchronous errors that may occur after a test completes
+ * (such as unhandled rejections or uncaught exceptions).
+ *
+ * @param output Raw combined test output from stdout/stderr.
+ * @returns An object containing the number of passed, failed, and total tests,
+ * and whether any failure condition was detected.
+ */
 function parseTestSummary(output: string): { passed: number; failed: number; total: number; hasFailed: boolean } {
   const lines = output.split('\n')
   let stats = {passed: 0, failed: 0, total: 0, hasFailed: false}
@@ -353,14 +342,6 @@ function getOutputFileName(inputPath: string): string {
   return basename(inputPath, extname(inputPath)) + '.md'
 }
 
-// --- Typecheck ---
-// NOTE: Moved into executeTasks() to run on each regeneration when --watch is used
-
-// --- Run tests ---
-// NOTE: Moved into executeTasks() to run on each regeneration when --watch is used
-
-// --- Generate markdown ---
-
 /**
  * Executes an async function with console and process output suppressed.
  * Saves and restores all output methods to ensure cleanup even on errors.
@@ -486,6 +467,7 @@ async function runTaskWithErrorHandling(
 }
 
 async function executeTasks(): Promise<void> {
+
   // Run typecheck before generation (if enabled)
   await runTaskWithErrorHandling(runTypecheck, async () => {
     const result = typecheck(inputPaths.map(p => resolve(p)))

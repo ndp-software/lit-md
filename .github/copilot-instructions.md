@@ -1,0 +1,2 @@
+- Do not generate new README.md in the docs folder. Follow the example in package.json, where src/docs/README.lit-md.ts is generated into ./README.md.
+- Consult DEVELOPMENT.md before doing anything.
