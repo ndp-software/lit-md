@@ -1,53 +1,52 @@
 # @ndp-software/lit-md
 
-Literate test files that generate `README.md`s.
+Literate test files that generate `README` or any other markdown documents with working code samples.
 
 ## Introduction
 
-Some projects, especially libraries, require numerous code examples. For those responsible for updating
-a README, or other documentation, this can be burdensome and error-prone. I've run into this before when writing a testing tool, and ran into it again when sketching out a new UI library. I wanted to write documentation with embedded code examples, but I also wanted to be sure that the examples were correct and up-to-date. This is what led me to create **lit-md**.
+Some projects, especially libraries, require code examples. For those (like me) responsible for updating
+the docs, this can be burdensome and error-prone. I ran into this when writing a testing tool, and I just confronted it again when sketching out a new UI library. I wanted to write _documentation with embedded code examples_, and guarantee that the examples were _correct and up to date_. This need led me to create **lit-md**.
 
-With **lit-md**, you write your documentation with embedded code samples.
-All the code samples are automatically type-checked and run through node to
-verify them (as tests). Every example actually works!
+*lit-md** is simple: you write your documentation as a block comment in a TypeScript file. For an code example blocks, you exit the comment and embed an `example`, which looks just like a test. (And is!)
+Because this is a TypeScript file, you get nice editor support for you code samples, and all the code samples are automatically type-checked and run as tests to assert specific behaviors. Every example actually works!
 
 Key features:
-- works with Typescript or Javascript
+- works with TypeScript or JavaScript
 - supports flexible assertion methods
-- provides utilities to include shell commands and their outputs
-  as part of your documentation. This is important if you tool has
-  a CLI, or you just need to show how it works in the terminal.
-- fully tested with its own test suite, which also serves as
-  documentation and examples for users
+- niceties like bundled test running and type checking, "watch" mode, document structuring with "describe" blocks
+- shell command code samples, their inputs and outputs, can be inserted in documentation and validated
 
-There _are_ other tools with the same aims (see [#similar-tools]),
-But this combines my interest in Literate programming with a passion for TDD and excitement about Typescript. I have aimed to provide a great DX
+There _are_ other tools with the same aims (see [Similar Tools](#similar-tools) below),
+but **lit-md** is a unique combination of [Literate programming](https://en.wikipedia.org/wiki/Literate_programming), TDD and TypeScript. I have aimed to provide a great DX
 for writing documentation, with a simple syntax and powerful features
-that work well with-in the node ecosystem.
+that work well within the node ecosystem.
 
-Documention is written in .ts (or .lit-md.ts) files, and the documentation is generated from comments and test bodies:
-```sh
-lit-md README.lit-md.ts > README.md
-
-# As a convenience, "run" all the code examples as tests, or a test suite:
-node --test README.lit-md.ts > README.md
-
-# Or, you can add typechecking and do them all as one step:
-lit-md --typecheck --test README.lit-md.ts > README.md
-```
 ## How it Works
-A **lit-md** file contains prose in comments and examples in test bodies.
-At a basic level, a file is processed, and
+
+Documention is written in .ts (or .lit-md.ts) files. These **lit-md** file contains prose in comments and examples in test bodies. At a basic level, a file is processed, and
 - comments are directly transferred into markdown, and
-- example (or `test`, `it`, `spec`) bodies become fenced code blocks.
+- example (or `test`, `spec`) bodies become fenced code blocks.
 To make this work well, there are quite a few nuances and features to control
 what appears in the output and how it looks.
+
+Once you have a file, you use the cli to generate the raw markdown file:
+```sh
+lit-md README.lit-md.ts --out README.md
+```
+You can also run this file as a test file (`node --test README.lit-md.ts`). As a convenience, **lit-md** will do this for you with the `--test` flag:
+```sh
+node --test README.lit-md.ts --out README.md
+```
+You can also make use the typechecking of TypeScript using the `tsc` command. This is optionally provided for you with the `--typecheck` command:
+```sh
+lit-md --typecheck --test README.lit-md.ts --out README.md
+```
 
 ## Basic Usage
 
 Add `@ndp-software/lit-md` to your project
 
-Then create a readme. The following is an example for a hypohetical "mathlib" project. Here's the source file:
+Then create a readme source file. The following is an example for a hypohetical "mathlib" project. Here's the source file:
 
 ```ts
 import { describe, example } from '@ndp-software/lit-md'
@@ -98,7 +97,7 @@ multiply(x, y) // => 12
 ```
 ````
 
-The full node assert library is supported.
+As you can see, `assert.equal` was mapped to and appropriate raw TypeScript so that it looks like an actual code example. The full node assert library is supported.
 
 For more information on CLI usage, see [CLI documentation](./docs/cli.md).
 
@@ -110,7 +109,7 @@ Use `shellExample` to include executable shell commands in the README.
 ### shellExample function
 
 ```ts
-shellExample('echo "hello world"', { stdout: { display: true } })
+shellExample('echo "hello world"', { stdout: {display: true}})
 ```
 becomes
 ```sh
@@ -121,13 +120,15 @@ hello world
 For more information on the `shellExample`, see [shellCommand documentation](./docs/shell-examples.md).
 ## Development
 
-See DEVELOPMENT.md file.
+See [DEVELOPMENT.md](DEVELOPMENT.md) file.
 
 
 ## Similar tools
 - [Literate JS](https://github.com/danvk/literate-ts) -- types checks code blocks in markdown files
 - [TwoSlash](https://github.com/microsoft/TypeScript-Website/tree/v2/packages/ts-twoslasher)
-- In [Test Pantry](https://github.com/ndp-software/test-pantry), I wrote [a function that extracts code blocks out of a markdown file and produces a test (.js) file](https://github.com/ndp-software/test-pantry/blob/master/readme-test-filter.js). This is similar to the approach of Literate JS (above), but is JS-only. This approach has limitations that the full parsing of lit-md overcomes.
+- In [Test Pantry](https://github.com/ndp-software/test-pantry), I wrote [a function that extracts code blocks out of a markdown file and produces a test (.js) file](https://github.com/ndp-software/test-pantry/blob/master/readme-test-filter.js). This also makes an apperance in my abandoned [literate-es-webpack-loader](https://github.com/ndp-software/literate-es-webpack-loader). This is similar to the approach of Literate JS (above), but is JS-only. This approach has limitations that the full parsing of lit-md overcomes.
+- [Literate Coffeescript](https://coffeescript.org/#literate)
+- [Erudite](https://github.com/artisonian/erudite)
 
 ## Credits
 
@@ -137,6 +138,5 @@ Literate Programming has been a long-standing interest of mine. An earlier
 version of trying to solve this problem is in Test Pantry, but this is a complete re-thinking and re-implementation, with a much more robust and flexible approach. I have been inspired by many literate programming tools, but especially Knuth's original work.
 
 Although there was some manual code changes,
-most of the code was Github Copilot CLI, using mostly Claude Haiku 4.5
-and some Claude Sonnet 4.6.
-Most tasks used a plan-autopilot loop, but other approaches were used as well.
+most of the code was used to learn AI-assisted programming, with Github Copilot CLI (Claude Haiku 4.5
+and some Claude Sonnet 4.6). Most tasks used a plan-autopilot loop, but I explored other approaches.

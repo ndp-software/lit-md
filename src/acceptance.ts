@@ -1,11 +1,11 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
-import { basename, extname, dirname, join } from 'node:path'
-import { spawnSync } from 'node:child_process'
-import { tmpdir } from 'node:os'
-import { parse } from './parser.ts'
-import { render } from './renderer.ts'
-import { resolveOutputFiles } from './resolver.ts'
-import { resetDescribeFormat, resolveDescribeFormat } from './describe-format.ts'
+import {readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, rmSync} from 'node:fs'
+import {basename, extname, dirname, join} from 'node:path'
+import {spawnSync} from 'node:child_process'
+import {tmpdir} from 'node:os'
+import {parse} from './parser.ts'
+import {render} from './renderer.ts'
+import {resolveOutputFiles} from './resolver.ts'
+import {resetDescribeFormat, resolveDescribeFormat} from './describe-format.ts'
 
 export interface AcceptanceTestResult {
   passed: number
@@ -15,7 +15,7 @@ export interface AcceptanceTestResult {
 }
 
 function colorize(diff: string): string {
-  const { TERM, COLORTERM, FORCE_COLOR, NO_COLOR } = process.env
+  const {TERM, COLORTERM, FORCE_COLOR, NO_COLOR} = process.env
   const useColor = !NO_COLOR && (
     FORCE_COLOR !== undefined ||
     COLORTERM !== undefined ||
@@ -56,18 +56,18 @@ function computeDiff(name: string, expected: string, actual: string): string | n
 function getSnapshotFileName(inputPath: string): string {
   const base = basename(inputPath)
   let name = base.slice(0, base.lastIndexOf('.'))
-  
+
   // Remove .lit-md suffix if present
   if (name.endsWith('.lit-md')) {
     name = name.slice(0, -'.lit-md'.length)
   }
-  
+
   return `${name}.snapshot.md`
 }
 
 /**
  * Get the snapshot file path for an input file.
- * 
+ *
  * @param inputPath - Path to input file
  * @param snapshotDir - Directory where snapshots are stored (usually same as input dir, or --outDir if specified)
  * @returns Full path to snapshot file
@@ -80,7 +80,7 @@ function getSnapshotPath(inputPath: string, snapshotDir: string): string {
 /**
  * Match snapshots for test files. Compares generated markdown against snapshot files.
  * If snapshot is missing, auto-generates it (like the test/acceptance.ts behavior).
- * 
+ *
  * @param inputPaths - Paths to input test files
  * @param snapshotDir - Directory where snapshots are stored (usually input dir, or --outDir if specified)
  * @param describeFormat - Describe format to use (default: '##')

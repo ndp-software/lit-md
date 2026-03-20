@@ -1,4 +1,6 @@
-export type DescribeFormatType = 'hidden' | '#' | '##' | '###' | '####' | 'auto'
+
+export const VALID_DESCRIBE_FORMATS = ['hidden', 'auto', '#', '##', '###', '####'] as const
+export type DescribeFormatType = typeof VALID_DESCRIBE_FORMATS[number]
 
 let overrideFormat: DescribeFormatType | undefined = undefined
 

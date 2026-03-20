@@ -1,18 +1,11 @@
-## Commit Checklist
-
-- [ ] All tests pass and valid Typescript (`npm run verify`)
-- [ ] Documentation is updated as needed (see Documentation below)
-- [ ] Changelog is updated as needed
-
 ## Workflow
 
-Before checking in changes, please run the tests and update snapshots and readme files as needed.
+### Commit Checklist
 
-Use:
-
-   > npm run verify
-
-between all changes to confirm that all tests pass, code is valid typescript, and readme and snapshot files are up to date.
+- [ ] All tests pass and valid Typescript (`npm run verify`)
+- [ ] update snapshots and readme files as needed]
+- [ ] Documentation is updated as needed (see Documentation below)
+- [ ] Changelog is updated as needed
 
 ## Documentation
 
