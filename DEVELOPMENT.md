@@ -1,11 +1,3 @@
-## Workflow
-
-### Commit Checklist
-
-- [ ] All tests pass and valid Typescript (`npm run verify`)
-- [ ] Update snapshots and README files as needed
-- [ ] Documentation is updated as needed (see Documentation below)
-- [ ] Changelog is updated as needed
 
 ## Getting Started
 
@@ -24,19 +16,17 @@ This command runs the full verification suite including tests, TypeScript checks
 
 ### Literate Markdown Pattern
 
-This project uses literate markdown — documentation mixed with executable code. The pattern:
+This project itself uses literate markdown — documentation mixed with executable code. The pattern:
 - **Comments** in `.lit-md.ts` files become markdown documentation
 - **Code examples** (using `example`, `test`, `spec`, `it`) automatically extract as code blocks
 - **Grouping** with `describe`, `context`, or `suite` becomes heading hierarchy
 
-Key documentation files:
-- `./src/docs/README.lit-md.ts` - Main README (comments + examples)
-- `./src/docs/cli.lit-md.ts` - CLI documentation
-- `./src/docs/shell-examples.lit-md.ts` - Shell example patterns
 
-**Important:** Do NOT edit `./README.md` directly. Instead:
+Do NOT edit `./README.md` directly. Instead:
 1. Edit `./src/docs/README.lit-md.ts`
 2. Run `npm run readme` to regenerate README.md
+
+Documentation is in ./docs. Sources are in ./src/docs/. Do NOT edit other docs files directly. Instead, edit the corresponding `.lit-md.ts` files and use `npm run build:docs` to regenerate the markdown files.
 
 ### Acceptance Tests
 
@@ -65,6 +55,15 @@ The `--match-snapshot` flag validates generated markdown output against `.snapsh
 6. Use `-u` flag to update snapshots when changes are intentional
 
 **Regression test:** There is a permanent regression test in `test/snapshot-regression.test.ts` that ensures snapshot validation correctly fails when content mismatches. This prevents the March 2026 regression where snapshots were silently updated during validation instead of being validated.
+
+## Workflow
+
+### Commit Checklist
+
+- [ ] All tests pass and valid Typescript (`npm run verify`)
+- [ ] Update snapshots and README files as needed
+- [ ] Documentation is updated as needed (see Documentation below)
+- [ ] Changelog is updated as needed
 
 ## CHANGELOG Format Guidelines
 
