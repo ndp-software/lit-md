@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.5.1] - 2026-03-23
+
+## Changed
+
+- **API**: Removed `parse()` and `render()` re-exports from main package entry point. These are internal implementation details used by the CLI; advanced users can import directly from `src/parser.ts` and `src/renderer.ts` if needed for custom tools.
+- **API**: Removed `DocNode`, `ProseNode`, and `CodeNode` type re-exports from main package entry point. These are internal types; the public API focuses on identifier functions and configuration (`setDescribeFormat()`).
+- **Packaging**: Added keywords to `package.json` for better discoverability on npm registry.
+- **Documentation**: Minor refinements to DEVELOPMENT.md for clarity.
+
 ## [0.5.0] - 2026-03-23
 
 ## Added
