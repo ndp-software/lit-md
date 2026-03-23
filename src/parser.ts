@@ -7,6 +7,10 @@ import { buildAliasPrefix } from './shell.ts'
 import { ShellExampleError, getLineAndColumn } from './error-context.ts'
 import type { SourceLocation } from './error-context.ts'
 
+// Identifier names for code examples and grouping
+const EXAMPLE_IDENTIFIERS = new Set(['test', 'it', 'spec', 'example'])
+const DESCRIBE_IDENTIFIERS = new Set(['describe', 'context', 'suite'])
+
 export type ProseNode = { kind: 'prose'; text: string; terminal?: true; noBlankAfter?: true; noBlankBefore?: true }
 export type CodeNode = { kind: 'code'; lang: string; text: string; title?: string }
 export type DescribeNode = { kind: 'describe'; name: string; depth: number }
@@ -120,7 +124,7 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
 
       if (ts.isCallExpression(expr) && ts.isIdentifier(expr.expression)) {
         const name = expr.expression.text
-        if (name === 'test' || name === 'it' || name === 'spec' || name === 'example') {
+        if (EXAMPLE_IDENTIFIERS.has(name)) {
           const testName = getStringArg(expr, 0)
           const body = getFnBody(expr, 1)
           if (body) {
@@ -172,7 +176,7 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
             return
           }
         }
-        if (name === 'describe' || name === 'context' || name === 'suite') {
+        if (DESCRIBE_IDENTIFIERS.has(name)) {
           const descName = getStringArg(expr, 0)
           const body = getFnBody(expr, 1)
           if (body && ts.isBlock(body) && descName !== null) {
