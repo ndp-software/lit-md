@@ -15,7 +15,10 @@
     "testing",
     "readme",
     "documentation",
-    "typescript"
+    "typescript",
+    "bdd",
+    "spec",
+    "testing-framework"
   ],
   "engines": {
     "node": ">=22"
