@@ -25,9 +25,9 @@ that work well within the node ecosystem.
 
 Documention is written in .ts (or .lit-md.ts) files. These **lit-md** file contains prose in comments and examples in test bodies. At a basic level, a file is processed, and
 - comments are directly transferred into markdown, and
-- example (or `test`, `spec`) bodies become fenced code blocks.
+- example (or `test`, `spec`, `it`) bodies become fenced code blocks.
 To make this work well, there are quite a few nuances and features to control
-what appears in the output and how it looks.
+what appears in the output and how it looks. You can also group examples with `describe` (or `context`, `suite`).
 
 Once you have a file, you use the cli to generate the raw markdown file:
 ```sh

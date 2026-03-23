@@ -120,7 +120,7 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
 
       if (ts.isCallExpression(expr) && ts.isIdentifier(expr.expression)) {
         const name = expr.expression.text
-        if (name === 'test' || name === 'it' || name === 'example') {
+        if (name === 'test' || name === 'it' || name === 'spec' || name === 'example') {
           const testName = getStringArg(expr, 0)
           const body = getFnBody(expr, 1)
           if (body) {
@@ -172,7 +172,7 @@ export function parse(src: string, lang = 'typescript', filePath?: string): DocN
             return
           }
         }
-        if (name === 'describe') {
+        if (name === 'describe' || name === 'context' || name === 'suite') {
           const descName = getStringArg(expr, 0)
           const body = getFnBody(expr, 1)
           if (body && ts.isBlock(body) && descName !== null) {

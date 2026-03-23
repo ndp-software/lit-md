@@ -4,7 +4,8 @@
 
 ## Added
 
-- **CLI**: `--match-snapshot` flag for snapshot-based validation. Compares generated markdown against `.snapshot.md` files. Auto-generates snapshots if missing (same behavior as `test/acceptance.ts`). Works with `--test`, `--typecheck`, and `--watch` flags. Fails with a diff if snapshot doesn't match, useful for ensuring markdown consistency across changes. New npm script `test:match` provide convenient snapshot validation workflows.
+- Support for additional code example identifiers: `spec` and `it` as aliases for `test`, and `context` and `suite` as aliases for `describe`. These are exported from the package and work identically to their counterparts, providing flexibility for different testing styles and naming conventions. (Engine)
+- Type definitions are now exported: `CodeNode`, `DescribeNode`, and `ProseNode` for better TypeScript support when using lit-md programmatically. (Engine)
 
 ## Breaking Changes
 

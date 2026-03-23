@@ -7,7 +7,7 @@ import {render} from './renderer.ts'
 import {typecheck} from './typecheck.ts'
 import {stripTypesFlag, watchFilesAndWait} from './shell.ts'
 import {resolveOutputFiles} from './resolver.ts'
-import {resetDescribeFormat, resolveDescribeFormat, VALID_DESCRIBE_FORMATS} from './describe-format.ts'
+import {resetDescribeFormat, resolveDescribeFormat, VALID_DESCRIBE_FORMATS, type DescribeFormatType} from './describe-format.ts'
 import {matchSnapshots} from './acceptance.ts'
 import {extractArgValue, extractFlagArg} from './args.ts'
 
@@ -66,7 +66,7 @@ if (!inputPaths.length) {
   process.exit(1)
 }
 
-if (!VALID_DESCRIBE_FORMATS.includes(describeFormat)) {
+if (!VALID_DESCRIBE_FORMATS.includes(describeFormat as DescribeFormatType)) {
   console.error(`error: invalid --describe format: ${describeFormat}. Valid formats: ${VALID_DESCRIBE_FORMATS.join(', ')}`)
   process.exit(1)
 }

@@ -6,7 +6,16 @@ import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
 import { ShellExampleError } from './error-context.ts'
 
-export { test as example, test as metaExample, describe } from 'node:test'
+export {
+  test,
+  test as example,
+  test as metaExample,
+  test as spec,
+  test as it,
+  describe,
+  describe as suite,
+  describe as context
+} from 'node:test'
 
 // Module-level alias registry: name → resolved shell command string
 const _aliases = new Map<string, string>()

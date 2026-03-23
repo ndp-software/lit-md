@@ -34,7 +34,7 @@ function colorize(diff: string): string {
 }
 
 function computeDiff(name: string, expected: string, actual: string): string | null {
-  const dir = mkdtempSync(join(tmpdir(), `lit-md-${name}-`))
+  const dir = mkdtempSync(join(tmpdir(), `lit-md-`))
   const expFile = join(dir, 'expected.md')
   const actFile = join(dir, 'actual.md')
   try {
@@ -44,7 +44,7 @@ function computeDiff(name: string, expected: string, actual: string): string | n
     if (result.status === 0) return null
     return colorize(result.stdout.toString())
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, {recursive: true, force: true})
   }
 }
 
@@ -100,58 +100,66 @@ export async function matchSnapshots(
 
   for (const inputPath of inputPaths) {
     result.total++
-    
-    try {
-      // Reset the describe format override before processing each file
-      resetDescribeFormat()
-      
-      // Import the file to allow module-level setup (like setDescribeFormat calls)
-      try {
-        // Use file:// URL for absolute paths to ensure proper module loading
-        // Add cache-busting query param to force re-execution of module
-        const fileUrl = inputPath.startsWith('/') ? 'file://' + inputPath : inputPath
-        await import(fileUrl + '?t=' + Date.now())
-      } catch {
-        // File might not be importable, continue
-      }
-
-      const src = readFileSync(inputPath, 'utf8')
-      const lang = extname(inputPath) === '.js' ? 'javascript' : 'typescript'
-      
-      const { resolveDescribeFormat: resolveFmt } = await import('./describe-format.ts')
-      const finalDescribeFormat = resolveFmt(describeFormat)
-      const generated = render(resolveOutputFiles(parse(src, lang)), finalDescribeFormat).trimEnd()
-      
-      const snapshotPath = getSnapshotPath(inputPath, snapshotDir)
-      
-      // If snapshot is missing, regenerate it (like test/acceptance.ts)
-      if (!existsSync(snapshotPath)) {
-        writeFileSync(snapshotPath, generated + '\n', 'utf8')
-        console.log(`✓ generated snapshot: ${snapshotPath}`)
-        result.passed++
-        continue
-      }
-      
-      const expected = readFileSync(snapshotPath, 'utf8').trimEnd()
-      const diff = computeDiff(basename(inputPath), expected, generated)
-      
-      if (diff !== null) {
-        result.failed++
-        result.errors.push({
-          file: basename(inputPath),
-          message: diff
-        })
-      } else {
-        result.passed++
-      }
-    } catch (error) {
-      result.failed++
-      result.errors.push({
-        file: basename(inputPath),
-        message: error instanceof Error ? error.message : String(error)
-      })
-    }
+    await matchSnapshot(inputPath, snapshotDir, describeFormat, result)
   }
 
   return result
+}
+
+
+async function matchSnapshot(inputPath: string,
+                             snapshotDir: string,
+                             describeFormat: string,
+                             result: AcceptanceTestResult): Promise<void> {
+  try {
+    // Reset the describe format override before processing each file
+    resetDescribeFormat()
+
+    // Import the file to allow module-level setup (like setDescribeFormat calls)
+    try {
+      // Use file:// URL for absolute paths to ensure proper module loading
+      // Add cache-busting query param to force re-execution of module
+      const fileUrl = inputPath.startsWith('/') ? 'file://' + inputPath : inputPath
+      await import(fileUrl + '?t=' + Date.now())
+    } catch {
+      // File might not be importable, continue
+    }
+
+    const src = readFileSync(inputPath, 'utf8')
+    const lang = extname(inputPath) === '.js' ? 'javascript' : 'typescript'
+
+    const {resolveDescribeFormat: resolveFmt} = await import('./describe-format.ts')
+    const finalDescribeFormat = resolveFmt(describeFormat)
+    const generated = render(resolveOutputFiles(parse(src, lang)), finalDescribeFormat).trimEnd()
+
+    const snapshotPath = getSnapshotPath(inputPath, snapshotDir)
+
+    // If snapshot is missing, regenerate it (like test/acceptance.ts)
+    if (!existsSync(snapshotPath)) {
+      writeFileSync(snapshotPath, generated + '\n', 'utf8')
+      console.log(`✓ generated snapshot: ${snapshotPath}`)
+      result.passed++
+      return
+    }
+
+    const expected = readFileSync(snapshotPath, 'utf8').trimEnd()
+    const diff = computeDiff(basename(inputPath), expected, generated)
+
+    if (diff !== null) {
+      result.failed++
+      result.errors.push({
+        file: basename(inputPath),
+        message: diff
+      })
+    } else {
+      result.passed++
+    }
+  } catch (error) {
+    result.failed++
+    result.errors.push({
+      file: basename(inputPath),
+      message: error instanceof Error ? error.message : String(error)
+    })
+  }
+
 }
