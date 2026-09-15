@@ -1,6 +1,6 @@
 {
   "name": "@ndp-software/lit-md",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Literate test files that generate README.md",
   "license": "UNLICENSED -- All rights reserved. See LICENSE file.",
   "author": "Andy Peterson <andy@ndpsoftware.com>",
@@ -27,6 +27,12 @@
   "bin": {
     "lit-md": "dist/cli.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "README.md",
     "dist/**/*",
@@ -48,7 +54,9 @@
     "build": "npm run build:types && npm run build:js",
     "build:all": "npm run clean && npm run readme && npm run build",
     "build:types": "tsc -p tsconfig.build.json",
-    "build:js": "esbuild ./src/cli.ts --bundle --format=esm --platform=node --target=es2022 --sourcemap --external:typescript --outfile=./dist/cli.js",
+    "build:js:cli": "esbuild ./src/cli.ts --bundle --format=esm --platform=node --target=es2022 --sourcemap --external:typescript --outfile=./dist/cli.js",
+    "build:js:index": "esbuild ./src/index.ts --bundle --format=esm --platform=node --target=es2022 --sourcemap --external:typescript --outfile=./dist/index.js",
+    "build:js": "npm run build:js:cli && npm run build:js:index",
     "build:docs": "find src/docs -name '*.lit-md.ts' | grep -v README | xargs node src/cli.ts --outDir ./docs",
 
     "prepublishOnly": "npm run clean && npm run verify && npm run build",
